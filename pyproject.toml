@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "physai"
+version = "0.1.0"
+description = "Advanced Physics-Informed Neural Networks (PINNs) library"
+readme = "README.md"
+authors = [{ name="Mankrit Singh", email="your_email@example.com" }]
+license = { text="MIT" }
+dependencies = ["torch>=2.0", "matplotlib>=3.0"]
+
+[project.urls]
+Homepage = "https://github.com/MS-AGI/physai"
