@@ -14,6 +14,10 @@ dist/
 *.egg
 *.whl
 
+# Ignore Python packaging setup files
+setup.py
+pyproject.toml
+
 # ------------------------------
 # Python environment
 # ------------------------------
@@ -26,9 +30,7 @@ ENV/
 # ------------------------------
 # IDEs
 # ------------------------------
-# VSCode
 .vscode/
-# PyCharm
 .idea/
 
 # ------------------------------
@@ -47,12 +49,6 @@ ENV/
 *.log
 *.tmp
 *.bak
-
-# ------------------------------
-# Ignore setup and pyproject
-# ------------------------------
-setup.py
-pyproject.toml
 
 # ------------------------------
 # Keep examples and tests
