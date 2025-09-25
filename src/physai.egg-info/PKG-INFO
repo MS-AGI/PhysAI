@@ -1,3 +1,19 @@
+Metadata-Version: 2.4
+Name: physai
+Version: 0.1.0
+Summary: Physics-Informed Neural Network (PINN) library for solving ODEs/PDEs with visualization and training tools
+Author-email: Mankrit Singh <whataninfinity@gmail.com>
+License: MIT
+Project-URL: GitHub, https://github.com/MS-AGI/PhysAI
+Keywords: PINN,Physics-Informed Neural Network,ODE,PDE,Deep Learning
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: torch>=2.0.0
+Requires-Dist: matplotlib
+Requires-Dist: numpy
+Dynamic: license-file
+
 # PhysAI - Physics-Informed Neural Networks (PINNs)
 
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
