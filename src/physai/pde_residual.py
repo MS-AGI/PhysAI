@@ -5,7 +5,13 @@ import torch
 # ------------------------------
 def derivative(y, x, order=1):
     for _ in range(order):
-        y = torch.autograd.grad(y, x, grad_outputs=torch.ones_like(y), create_graph=True)[0]
+        y = torch.autograd.grad(
+                y, x,
+                grad_outputs=torch.ones_like(y),
+                create_graph=True,
+                allow_unused=True  # <-- critical for Schrödinger PDE
+            )[0]
+
     return y
 
 # ------------------------------
