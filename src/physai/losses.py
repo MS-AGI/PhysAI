@@ -38,7 +38,7 @@ def pinn_loss(model, collocation_points, pde_type, bc_points=None, bc_values=Non
     bc_values: tensor for boundary/initial values
     kwargs: extra parameters for PDE residual (nu, r, K, gamma, etc.)
     """
-    from physai.physics import pde_residual
+    from physai import pde_residual
     
     # PDE Residual
     residual = pde_residual(model, collocation_points, pde_type, **kwargs)

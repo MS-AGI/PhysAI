@@ -24,7 +24,7 @@ class Trainer:
 
         self.model.to(self.device)
         self.history = {"total_loss": [], "res_loss": [], "bc_loss": []}
-        self.scaler = torch.cuda.amp.GradScaler(enabled=self.device.startswith("cuda"))
+        self.scaler = torch.amp.GradScaler(enabled=self.device.startswith("cuda"))
 
     def train(self, epochs=1000, lr=1e-3, scheduler_fn=None, clip_grad=None, verbose=True, **kwargs):
         optimizer = optim.Adam(self.model.parameters(), lr=lr)
@@ -36,7 +36,7 @@ class Trainer:
 
         for epoch in range(epochs):
             optimizer.zero_grad()
-            with torch.cuda.amp.autocast(enabled=self.device.startswith("cuda")):
+            with torch.amp.autocast(enabled=self.device.startswith("cuda")):
                 total, res_l, bc_l = pinn_loss(
                     self.model, x, self.pde_type, bc_points=bc_x, bc_values=bc_y, **kwargs
                 )

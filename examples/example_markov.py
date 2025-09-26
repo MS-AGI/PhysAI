@@ -1,5 +1,5 @@
 import torch
-from physai.models import PINN #type: ignore
+from physai import PINN #type: ignore
 from physai.trainer import Trainer #type: ignore
 from physai.visualization import animate_2d #type: ignore
 

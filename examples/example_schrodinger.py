@@ -3,7 +3,7 @@ from physai.pde_residual import pde_residual #type: ignore
 from physai.losses import pinn_loss #type: ignore
 from physai.trainer import Trainer #type: ignore
 from physai.visualization import plot_1d_solution, animate_2d #type: ignore
-from physai.models import PINN #type: ignore
+from physai import PINN #type: ignore
 
 # Define domain
 x = torch.linspace(-5, 5, 200).view(-1,1)
