@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.cuda.amp import autocast
+from torch.amp import autocast
 from torch.amp import grad_scaler as GradScaler
 class PINN(nn.Module):
     """Physics-Informed Neural Network (PINN) with advanced optimization features."""

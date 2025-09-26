@@ -36,7 +36,7 @@ class Trainer:
 
         for epoch in range(epochs):
             optimizer.zero_grad()
-            with torch.amp.autocast(enabled=self.device.startswith("cuda")):
+            with torch.amp.autocast(device_type=self.device, enabled=self.device.startswith("cuda")):
                 total, res_l, bc_l = pinn_loss(
                     self.model, x, self.pde_type, bc_points=bc_x, bc_values=bc_y, **kwargs
                 )
