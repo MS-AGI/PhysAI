@@ -1,7 +1,7 @@
 import torch
-from physai import PINN  # type: ignore
-from physai.trainer import Trainer  # type: ignore
-from physai.visualization import plot_1d_solution  # type: ignore
+from physai import PINN
+from physai.trainer import Trainer
+from physai.visualization import plot_1d_solution
 
 # -----------------------------
 # 1. Domain
@@ -23,7 +23,7 @@ T0 = torch.tensor([[90.0]], dtype=torch.float32)
 # -----------------------------
 # 4. Boundary points
 # -----------------------------
-bc_points = torch.tensor([[0.0]], dtype=torch.float32, requires_grad=True)
+bc_points = torch.tensor([[0.0]], dtype=torch.float32) # Removed redundant requires_grad=True
 bc_values = T0
 
 # -----------------------------
@@ -35,7 +35,7 @@ trainer = Trainer(
     pde_type="newton_cooling",
     bc_points=bc_points,
     bc_values=bc_values,
-    device="cpu"
+    # device="cpu" # Removed explicit device setting to allow GPU if available
 )
 
 # -----------------------------

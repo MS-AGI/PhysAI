@@ -1,7 +1,7 @@
 import torch
-from physai import PINN  # type: ignore
-from physai.trainer import Trainer  # type: ignore
-from physai.visualization import animate_2d  # type: ignore
+from physai import PINN
+from physai.trainer import Trainer
+from physai.visualization import animate_2d
 
 # -----------------------------
 # 1. Domain
@@ -26,12 +26,15 @@ def V(inputs):
 x0 = x_vals.view(-1,1)
 t0 = torch.zeros_like(x0)
 bc_points = torch.cat([x0, t0], dim=1).float().requires_grad_(True)
-bc_values = torch.exp(-0.5 * x0**2)  # Gaussian
+# Initial condition for Schrödinger is typically complex.
+# Here, we assume a purely real Gaussian initial wavefunction.
+bc_values = torch.exp(-0.5 * x0**2).to(torch.complex64) # Ensure bc_values are complex
 
 # -----------------------------
 # 4. PINN model
 # -----------------------------
-model = PINN(layers=[2, 50, 50, 50, 1])
+# Set complex_output=True for Schrödinger equation
+model = PINN(layers=[2, 50, 50, 50, 1], complex_output=True)
 
 # -----------------------------
 # 5. Trainer
@@ -42,7 +45,7 @@ trainer = Trainer(
     bc_points=bc_points,
     bc_values=bc_values,
     pde_type="schrodinger",
-    device="cpu"
+    # device="cpu" # Removed explicit device setting to allow GPU if available
 )
 
 # -----------------------------
@@ -54,10 +57,10 @@ history = trainer.train(
     V=V,
     hbar=1.0,
     m=1.0,
-    batch_size=500  # reduce batch size for memory
+    # batch_size=500  # Removed ignored argument
 )
 
 # -----------------------------
 # 7. Visualization
 # -----------------------------
-animate_2d(model, x_vals, t_vals, title="Schrödinger Equation Evolution")
+animate_2d(model, x_vals, t_vals, title="Schrödinger Equation Evolution (Magnitude)")

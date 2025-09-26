@@ -1,7 +1,7 @@
 import torch
-from physai import PINN  # type: ignore
-from physai.trainer import Trainer  # type: ignore
-from physai.visualization import plot_1d_solution  # type: ignore
+from physai import PINN
+from physai.trainer import Trainer
+from physai.visualization import plot_1d_solution
 
 # -----------------------------
 # 1. Domain: frequencies
@@ -12,11 +12,14 @@ T_val = 2.7  # Kelvin
 # -----------------------------
 # 2. Exact Planck function (for reference)
 # -----------------------------
-def exact_planck(freq, T):
+def exact_planck(freq_tensor, T_scalar):
     h = 1.0
     c = 1.0
     kB = 1.0
-    return (2*h*freq**3/c**2) / (torch.exp(h*freq/(kB*T)) - 1)
+    # Ensure operations are on tensors and handle potential division by zero for exp(0)-1
+    exp_term = torch.exp(h * freq_tensor / (kB * T_scalar))
+    # Add a small epsilon to prevent division by zero if exp_term happens to be 1
+    return (2 * h * freq_tensor**3 / c**2) / (exp_term - 1 + 1e-9)
 
 # -----------------------------
 # 3. PINN model
@@ -35,7 +38,7 @@ trainer = Trainer(
     model,
     collocation_points=inputs,
     pde_type="planck",
-    device="cpu"
+    # device="cpu" # Removed explicit device setting to allow GPU if available
 )
 
 # -----------------------------
@@ -43,7 +46,8 @@ trainer = Trainer(
 # -----------------------------
 trainer.train(
     epochs=500,
-    lr=1e-3
+    lr=1e-3,
+    exact_planck=lambda f, T: exact_planck(f, T_val) # Pass the exact Planck function with fixed T_val
 )
 
 # -----------------------------
@@ -51,7 +55,7 @@ trainer.train(
 # -----------------------------
 plot_1d_solution(
     model,
-    freq,
+    freq, # Pass freq for x-axis, model will take inputs
     exact=exact_planck(freq, T_val),
     title="Planck's Law"
 )

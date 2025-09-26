@@ -40,14 +40,26 @@ class Trainer:
 
         x = make_grad_tensor(self.x)
         bc_x = make_grad_tensor(self.bc_x)
-        bc_y = self.bc_y.to(self.device) if self.bc_y is not None else None  # BC targets do not need grad
+        
+        # Ensure bc_y is on the correct device and has correct dtype if complex
+        if self.bc_y is not None:
+            bc_y = self.bc_y.to(self.device)
+            if self.model.complex_output and not bc_y.is_complex():
+                bc_y = bc_y.to(torch.complex64)
+        else:
+            bc_y = None
 
         # -----------------------------
         # Training loop
         # -----------------------------
         for epoch in range(epochs):
             optimizer.zero_grad()
-            with torch.amp.autocast(device_type=self.device, enabled=self.device.startswith("cuda")):
+            # Autocast for mixed precision training.
+            # Note: Autocast does not support complex numbers directly.
+            # If the model outputs complex numbers, autocast might need careful handling
+            # or be disabled for complex parts of the computation.
+            # For now, it's enabled based on device type.
+            with torch.amp.autocast(device_type=self.device.split(':')[0], enabled=self.device.startswith("cuda")):
                 total, res_l, bc_l = pinn_loss(
                     self.model, x, self.pde_type, bc_points=bc_x, bc_values=bc_y, **kwargs
                 )
@@ -77,3 +89,4 @@ class Trainer:
     def plot_training_loss(self):
         """Plot training loss curves"""
         plot_loss(self.history, title=f"Training Loss for {self.pde_type}")
+        

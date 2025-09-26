@@ -3,13 +3,18 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.amp import autocast
 from torch.amp import grad_scaler as GradScaler
+
 class PINN(nn.Module):
     """Physics-Informed Neural Network (PINN) with advanced optimization features."""
 
-    def __init__(self, layers, activation='tanh', device=None):
+    def __init__(self, layers, activation='tanh', device=None, complex_output=False):
         super().__init__()
         # Set device
         self.device = device if device else ('cuda' if torch.cuda.is_available() else 'cpu')
+        self.complex_output = complex_output
+        # Adjust last layer size if complex output is desired
+        if self.complex_output:
+            layers[-1] = layers[-1] * 2 # Output real and imaginary parts
         # Build the neural network
         self.model = self._build_network(layers, activation).to(self.device)
         # Store training history
@@ -36,14 +41,18 @@ class PINN(nn.Module):
         return nn.Sequential(*net)
 
     def forward(self, x):
-        return self.model(x)
+        output = self.model(x)
+        if self.complex_output:
+            # Assuming the last layer outputs [real_part, imag_part]
+            return torch.complex(output[..., 0], output[..., 1])
+        return output
 
     def physics_loss(self, x, physics_fn):
         """Compute physics-integrated loss."""
         x = x.to(self.device).requires_grad_(True)
         y = self.forward(x)
         residual = physics_fn(x, y)
-        return torch.mean(residual ** 2)
+        return torch.mean(torch.abs(residual) ** 2) # Use abs for complex residuals
 
     def train_model(self, x, physics_fn, lr=1e-3, epochs=1000, verbose=True,
                     clip_grad=None, scheduler=None, use_amp=True):

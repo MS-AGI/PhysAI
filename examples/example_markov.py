@@ -1,7 +1,7 @@
 import torch
-from physai import PINN  # type: ignore
-from physai.trainer import Trainer  # type: ignore
-from physai.visualization import animate_2d  # type: ignore
+from physai import PINN
+from physai.trainer import Trainer
+from physai.visualization import animate_2d
 
 # -----------------------------
 # 1. Domain
@@ -11,8 +11,7 @@ t_vals = torch.linspace(0, 2, 50)
 
 # Create collocation points manually (list comprehension)
 XT = torch.tensor([[xi.item(), ti.item()] for ti in t_vals for xi in x_vals],
-                  dtype=torch.float32,
-                  requires_grad=True)  # critical for autograd
+                  dtype=torch.float32) # Removed redundant requires_grad=True
 
 # -----------------------------
 # 2. PINN model
@@ -26,7 +25,7 @@ trainer = Trainer(
     model,
     collocation_points=XT,
     pde_type="markov",
-    device="cpu"
+    # device="cpu" # Removed explicit device setting to allow GPU if available
 )
 
 # -----------------------------

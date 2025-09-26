@@ -10,9 +10,9 @@ def residual_loss(residual):
     """
     if isinstance(residual, tuple):
         # Sum of losses for multiple residuals
-        return sum(torch.mean(r**2) for r in residual)
+        return sum(torch.mean(torch.abs(r)**2) for r in residual) # Handle complex residuals
     else:
-        return torch.mean(residual**2)
+        return torch.mean(torch.abs(residual)**2) # Handle complex residuals
 
 # ------------------------------
 # Boundary / Initial Condition Loss
@@ -23,7 +23,13 @@ def bc_loss(pred, target):
     pred: predicted values at BC/IC points
     target: true values at BC/IC points
     """
-    return torch.mean((pred - target)**2)
+    # Ensure both pred and target are complex if one is, for consistent comparison
+    if pred.is_complex() or target.is_complex():
+        pred = pred.to(torch.complex64) if not pred.is_complex() else pred
+        target = target.to(torch.complex64) if not target.is_complex() else target
+        return torch.mean(torch.abs(pred - target)**2)
+    else:
+        return torch.mean((pred - target)**2)
 
 # ------------------------------
 # Combined PINN Loss
@@ -45,7 +51,7 @@ def pinn_loss(model, collocation_points, pde_type, bc_points=None, bc_values=Non
     res_loss = residual_loss(residual)
     
     # Boundary / Initial Condition Loss
-    bc_l = torch.tensor(0.0)
+    bc_l = torch.tensor(0.0, device=collocation_points.device)
     if bc_points is not None and bc_values is not None:
         pred_bc = model(bc_points)
         bc_l = bc_loss(pred_bc, bc_values)
