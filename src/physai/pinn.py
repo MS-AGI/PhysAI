@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.amp import autocast
 from torch.amp import grad_scaler as GradScaler
+import warnings
+warnings.filterwarnings("ignore", category=torch.exceptions.ComplexHalfWarning)
 
 class PINN(nn.Module):
     """Physics-Informed Neural Network (PINN) with advanced optimization features."""
@@ -41,10 +43,17 @@ class PINN(nn.Module):
         return nn.Sequential(*net)
 
     def forward(self, x):
+        # Ensure x is on device
+        x = x.to(self.device)
         output = self.model(x)
         if self.complex_output:
-            # Assuming the last layer outputs [real_part, imag_part]
-            return torch.complex(output[..., 0], output[..., 1])
+            # Handle shape: assume output is (..., 2) for [real, imag]
+            if output.shape[-1] == 2:
+                real = output[..., 0]
+                imag = output[..., 1]
+            else:
+                raise ValueError(f"Expected output shape with last dim 2 for complex, got {output.shape}")
+            return torch.complex(real, imag, dtype=torch.complex64)
         return output
 
     def physics_loss(self, x, physics_fn):

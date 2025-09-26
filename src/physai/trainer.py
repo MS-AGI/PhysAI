@@ -29,12 +29,13 @@ class Trainer:
         scheduler = scheduler_fn(optimizer) if scheduler_fn else None
 
         # -----------------------------
-        # Ensure inputs require gradients
+        # Ensure inputs require gradients WITHOUT detaching (preserve graph)
         # -----------------------------
         def make_grad_tensor(t):
             if t is None:
                 return None
-            return t.clone().detach().to(self.device).requires_grad_(True)
+            # Remove .detach() to avoid breaking grad_fn
+            return t.clone().to(self.device).requires_grad_(True)
 
         x = make_grad_tensor(self.x)
         bc_x = make_grad_tensor(self.bc_x)
@@ -62,3 +63,30 @@ class Trainer:
 
             if self.use_amp:
                 self.scaler.scale(total).backward()
+                if clip_grad:
+                    self.scaler.unscale_(optimizer)
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), clip_grad)
+                self.scaler.step(optimizer)
+                self.scaler.update()
+            else:
+                total.backward()
+                if clip_grad:
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), clip_grad)
+                optimizer.step()
+
+            if scheduler:
+                scheduler.step()
+
+            self.history["total_loss"].append(total.item())
+            self.history["res_loss"].append(res_l.item())
+            self.history["bc_loss"].append(bc_l.item())
+
+            if verbose and (epoch % max(epochs // 10, 1) == 0 or epoch == epochs - 1):
+                print(f"Epoch {epoch+1}/{epochs} | Total: {total.item():.6e} | "
+                      f"Res: {res_l.item():.6e} | BC: {bc_l.item():.6e}")
+
+        return self.history
+
+    def plot_training_loss(self):
+        """Plot training loss curves"""
+        plot_loss(self.history, title=f"Training Loss for {self.pde_type}")

@@ -4,10 +4,15 @@ import torch
 # Utility: derivatives
 # ------------------------------
 def derivative(y, x, order=1):
+    # Safety check: Ensure y has grad_fn for differentiation
+    if not y.requires_grad:
+        raise RuntimeError(f"Cannot compute derivative of y (shape {y.shape}, requires_grad={y.requires_grad}). "
+                          f"Ensure inputs to model have requires_grad=True and no detach() in pipeline.")
+    
     for _ in range(order):
         grad = torch.autograd.grad(
             y, x,
-            grad_outputs=torch.ones_like(y, dtype=y.dtype),  # Ensure dtype matches
+            grad_outputs=torch.ones_like(y, dtype=y.dtype),  # Ensure dtype matches (supports complex)
             create_graph=True,
             allow_unused=True  # critical
         )[0]
@@ -35,17 +40,17 @@ def pde_residual(model, inputs, pde_type, **kwargs):
     kwargs: extra parameters (nu, c, alpha, beta, V, f, r, K, gamma, etc.)
     """
     
-    # Enable gradients without detaching (preserve graph)
-    inputs.requires_grad_(True)  # No .detach() to avoid breaking grad_fn
+    # Safety: Ensure gradients without breaking graph (no detach)
+    inputs.requires_grad_(True)
     u_val_raw = model(inputs)
 
     # Handle complex output for Schrödinger equation
     if pde_type == "schrodinger":
-        if u_val_raw.is_complex():
+        if hasattr(u_val_raw, 'is_complex') and u_val_raw.is_complex():
             u_val = u_val_raw
         elif len(u_val_raw.shape) > 1 and u_val_raw.shape[-1] == 2:
             # Model outputs real and imag as separate channels
-            u_val = torch.complex(u_val_raw[..., 0], u_val_raw[..., 1])
+            u_val = torch.complex(u_val_raw[..., 0], u_val_raw[..., 1], dtype=torch.complex64)
         else:
             raise ValueError("Schrödinger equation requires complex output. Ensure model outputs complex tensor or (N, 2) for real/imag parts.")
     else:
@@ -124,10 +129,15 @@ def pde_residual(model, inputs, pde_type, **kwargs):
         x, t = inputs[:,0:1], inputs[:,1:2]
         hbar = kwargs.get("hbar", 1.0); m = kwargs.get("m", 1.0)
         V = kwargs.get("V", None)
-        V_val = V(inputs) if V is not None else torch.zeros_like(u_val.real, dtype=torch.complex64)  # Ensure complex
+        if V is not None:
+            V_val = V(inputs)
+            # Ensure V_val is complex if u_val is
+            if u_val.is_complex() and not V_val.is_complex():
+                V_val = V_val.to(torch.complex64)
+        else:
+            V_val = torch.zeros_like(u_val, dtype=torch.complex64)
         
-        # Schrödinger equation: i*hbar*du/dt + hbar^2/(2m)*d^2u/dx^2 - V*u = 0
-        # Residual = i*hbar*du/dt + hbar^2/(2m)*d^2u/dx^2 - V*u
+        # Schrödinger residual: i*hbar*du/dt + (hbar^2 / 2m) * d^2u/dx^2 - V*u = 0
         du_dt = derivative(u_val, t)
         d2u_dx2 = derivative(u_val, x, 2)
         return 1j * hbar * du_dt + (hbar**2 / (2 * m)) * d2u_dx2 - V_val * u_val
