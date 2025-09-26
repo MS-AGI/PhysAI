@@ -7,19 +7,18 @@ def derivative(y, x, order=1):
     for _ in range(order):
         grad = torch.autograd.grad(
             y, x,
-            grad_outputs=torch.ones_like(y, dtype=y.dtype), # Ensure grad_outputs dtype matches y
+            grad_outputs=torch.ones_like(y, dtype=y.dtype),  # Ensure dtype matches
             create_graph=True,
             allow_unused=True  # critical
         )[0]
 
         # If grad is None, replace with zeros of same shape and dtype
         if grad is None:
-            grad = torch.zeros_like(x, dtype=y.dtype)
+            grad = torch.zeros_like(y, dtype=y.dtype)  # Use y's dtype for complex support
 
         y = grad
 
     return y
-
 
 # ------------------------------
 # Unified PDE/ODE Residual
@@ -36,16 +35,19 @@ def pde_residual(model, inputs, pde_type, **kwargs):
     kwargs: extra parameters (nu, c, alpha, beta, V, f, r, K, gamma, etc.)
     """
     
-    # Enable gradients
-    inputs = inputs.clone().detach().requires_grad_(True)
+    # Enable gradients without detaching (preserve graph)
+    inputs.requires_grad_(True)  # No .detach() to avoid breaking grad_fn
     u_val_raw = model(inputs)
 
     # Handle complex output for Schrödinger equation
     if pde_type == "schrodinger":
-        if u_val_raw.shape[-1] == 2: # Assuming model outputs real and imag parts
+        if u_val_raw.is_complex():
+            u_val = u_val_raw
+        elif len(u_val_raw.shape) > 1 and u_val_raw.shape[-1] == 2:
+            # Model outputs real and imag as separate channels
             u_val = torch.complex(u_val_raw[..., 0], u_val_raw[..., 1])
         else:
-            raise ValueError("Schrödinger equation requires complex output (model output shape should be N, 2 for real/imag parts).")
+            raise ValueError("Schrödinger equation requires complex output. Ensure model outputs complex tensor or (N, 2) for real/imag parts.")
     else:
         u_val = u_val_raw
     
@@ -122,15 +124,13 @@ def pde_residual(model, inputs, pde_type, **kwargs):
         x, t = inputs[:,0:1], inputs[:,1:2]
         hbar = kwargs.get("hbar", 1.0); m = kwargs.get("m", 1.0)
         V = kwargs.get("V", None)
-        V_val = V(inputs) if V is not None else torch.zeros_like(u_val, dtype=u_val.dtype)
+        V_val = V(inputs) if V is not None else torch.zeros_like(u_val.real, dtype=torch.complex64)  # Ensure complex
         
-        # Ensure V_val is complex if u_val is complex
-        if u_val.is_complex() and not V_val.is_complex():
-            V_val = V_val.to(torch.complex64)
-
-        # Schrödinger equation: i*hbar*du/dt = -hbar^2/(2m)*d^2u/dx^2 + V*u
+        # Schrödinger equation: i*hbar*du/dt + hbar^2/(2m)*d^2u/dx^2 - V*u = 0
         # Residual = i*hbar*du/dt + hbar^2/(2m)*d^2u/dx^2 - V*u
-        return 1j*hbar*derivative(u_val, t) + (hbar**2/(2*m))*derivative(u_val, x, 2) - V_val*u_val
+        du_dt = derivative(u_val, t)
+        d2u_dx2 = derivative(u_val, x, 2)
+        return 1j * hbar * du_dt + (hbar**2 / (2 * m)) * d2u_dx2 - V_val * u_val
     
     if pde_type == "navier_stokes_2d":
         x, y, t = inputs[:,0:1], inputs[:,1:2], inputs[:,2:3]

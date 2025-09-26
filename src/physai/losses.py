@@ -6,13 +6,13 @@ import torch
 def residual_loss(residual):
     """
     Compute the mean squared residual loss for PINNs.
-    residual: tensor or tuple of tensors (for systems like Navier-Stokes)
+    Handles complex residuals using magnitude squared.
     """
     if isinstance(residual, tuple):
         # Sum of losses for multiple residuals
-        return sum(torch.mean(torch.abs(r)**2) for r in residual) # Handle complex residuals
+        return sum(torch.mean(torch.abs(r)**2) for r in residual)
     else:
-        return torch.mean(torch.abs(residual)**2) # Handle complex residuals
+        return torch.mean(torch.abs(residual)**2)
 
 # ------------------------------
 # Boundary / Initial Condition Loss
@@ -20,13 +20,14 @@ def residual_loss(residual):
 def bc_loss(pred, target):
     """
     Compute MSE loss for boundary or initial conditions.
-    pred: predicted values at BC/IC points
-    target: true values at BC/IC points
+    Handles complex by converting to complex64 if needed.
     """
-    # Ensure both pred and target are complex if one is, for consistent comparison
-    if pred.is_complex() or target.is_complex():
-        pred = pred.to(torch.complex64) if not pred.is_complex() else pred
-        target = target.to(torch.complex64) if not target.is_complex() else target
+    # Ensure both are complex if either is
+    if pred.is_complex() or (hasattr(target, 'is_complex') and target.is_complex()):
+        if not pred.is_complex():
+            pred = torch.complex(pred, torch.zeros_like(pred))
+        if not target.is_complex():
+            target = torch.complex(target, torch.zeros_like(target))
         return torch.mean(torch.abs(pred - target)**2)
     else:
         return torch.mean((pred - target)**2)
@@ -37,12 +38,6 @@ def bc_loss(pred, target):
 def pinn_loss(model, collocation_points, pde_type, bc_points=None, bc_values=None, **kwargs):
     """
     Compute total loss for PINNs: PDE residual + BC loss
-    model: PINN model
-    collocation_points: points where PDE is enforced
-    pde_type: string specifying PDE/ODE type
-    bc_points: tensor for boundary/initial points
-    bc_values: tensor for boundary/initial values
-    kwargs: extra parameters for PDE residual (nu, r, K, gamma, etc.)
     """
     from physai.pde_residual import pde_residual
     
