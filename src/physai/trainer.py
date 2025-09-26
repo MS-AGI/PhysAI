@@ -30,10 +30,21 @@ class Trainer:
         optimizer = optim.Adam(self.model.parameters(), lr=lr)
         scheduler = scheduler_fn(optimizer) if scheduler_fn else None
 
-        x = self.x.to(self.device)
-        bc_x = self.bc_x.to(self.device) if self.bc_x is not None else None
-        bc_y = self.bc_y.to(self.device) if self.bc_y is not None else None
+        # -----------------------------
+        # Ensure inputs require gradients
+        # -----------------------------
+        def make_grad_tensor(t):
+            if t is None:
+                return None
+            return t.clone().detach().to(self.device).requires_grad_(True)
 
+        x = make_grad_tensor(self.x)
+        bc_x = make_grad_tensor(self.bc_x)
+        bc_y = self.bc_y.to(self.device) if self.bc_y is not None else None  # BC targets do not need grad
+
+        # -----------------------------
+        # Training loop
+        # -----------------------------
         for epoch in range(epochs):
             optimizer.zero_grad()
             with torch.amp.autocast(device_type=self.device, enabled=self.device.startswith("cuda")):
