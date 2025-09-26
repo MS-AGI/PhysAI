@@ -5,14 +5,21 @@ import torch
 # ------------------------------
 def derivative(y, x, order=1):
     for _ in range(order):
-        y = torch.autograd.grad(
-                y, x,
-                grad_outputs=torch.ones_like(y),
-                create_graph=True,
-                allow_unused=True  # <-- critical for Schrödinger PDE
-            )[0]
+        grad = torch.autograd.grad(
+            y, x,
+            grad_outputs=torch.ones_like(y),
+            create_graph=True,
+            allow_unused=True  # critical
+        )[0]
+
+        # If grad is None, replace with zeros of same shape
+        if grad is None:
+            grad = torch.zeros_like(x)
+
+        y = grad
 
     return y
+
 
 # ------------------------------
 # Unified PDE/ODE Residual
