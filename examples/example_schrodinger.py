@@ -1,4 +1,4 @@
-import torch
+import torch  
 from physai import PINN
 from physai.trainer import Trainer
 from physai.visualization import animate_2d
@@ -45,7 +45,7 @@ trainer = Trainer(
     bc_points=bc_points,
     bc_values=bc_values,
     pde_type="schrodinger",
-    # device="cpu" # Removed explicit device setting to allow GPU if available
+ # Removed explicit device setting to allow GPU if available
 )
 
 # -----------------------------

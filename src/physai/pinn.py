@@ -57,7 +57,9 @@ class PINN(nn.Module):
                 imag = output[..., 1]
             else:
                 raise ValueError(f"Expected output shape with last dim 2 for complex, got {output.shape}")
-            return torch.complex(real, imag, dtype=torch.complex64)
+            complex_output = torch.complex(real, imag)  # PyTorch infers dtype from inputs
+            complex_output = complex_output.to(torch.complex64)  # optional, ensure 32-bit
+            return complex_output
         return output
 
     def physics_loss(self, x, physics_fn):
