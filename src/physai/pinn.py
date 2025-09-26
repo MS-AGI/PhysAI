@@ -4,7 +4,7 @@ import torch.optim as optim
 from torch.amp import autocast
 from torch.amp import grad_scaler as GradScaler
 import warnings
-warnings.filterwarnings("ignore", category=torch.exceptions.ComplexHalfWarning)
+warnings.filterwarnings('ignore', category=torch.exceptions.ComplexHalfWarning)
 
 class PINN(nn.Module):
     """Physics-Informed Neural Network (PINN) with advanced optimization features."""
