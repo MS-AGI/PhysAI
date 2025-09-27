@@ -2,7 +2,7 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/physai.svg)](https://pypi.org/project/physai/)
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-indigo.svg)](https://opensource.org/licenses/MIT)
+[![License: Modified Apache 2.0](https://img.shields.io/badge/License-Apache-indigo.svg)](https://opensource.org/license/apache-2-0)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/physai.svg)](https://pypi.org/project/physai/)
 [![Socket Badge](https://badge.socket.dev/pypi/package/physai/2.5.7?artifact_id=tar-gz)](https://badge.socket.dev/pypi/package/physai/2.5.7?artifact_id=tar-gz)
 [![DOI](https://zenodo.org/badge/1064030431.svg)](https://doi.org/10.5281/zenodo.17214724)
