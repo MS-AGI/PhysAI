@@ -1,7 +1,11 @@
-# PhysAI - Physics-Informed Neural Networks (PINNs)
+# PhysAI: Modular PyTorch Library with Built-In Residual PDEs, Automatic PINN Losses, and Visualization Tools for Complex ODE/PDE Solving
 
+[![PyPI version](https://img.shields.io/pypi/v/physai.svg)](https://pypi.org/project/physai/)
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-indigo.svg)](https://opensource.org/licenses/MIT)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/physai.svg)](https://pypi.org/project/physai/)
+[![Socket Badge](https://badge.socket.dev/pypi/package/physai/2.5.7?artifact_id=tar-gz)](https://badge.socket.dev/pypi/package/physai/2.5.7?artifact_id=tar-gz)
+[![DOI](https://zenodo.org/badge/1064030431.svg)](https://doi.org/10.5281/zenodo.17214724)
 
 ---
 
@@ -156,16 +160,25 @@ animate_2d(model, x, t, title='Heat Equation Evolution')
 
 ---
 
-## **Citation / Usage in Papers**
+## Citation
+If you use **PhysAI** in your research, academic publication, or official work, **citation is required**.
 
-If you use **PhysAI** in your research, please cite it as:
+Please cite the software as follows:
 
-```
-@misc{PhysAI2025,
-  author = {Mankrit Singh},
-  title = {PhysAI: Physics-Informed Neural Networks in PyTorch},
-  year = {2025},
-  howpublished = {\url{https://github.com/MS-AGI/PhysAI}
+**APA:**
+> Singh, M. (2025). *PhysAI: Physics-Informed Neural Networks in PyTorch* (Version 2.5.7) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.17214725
+
+**BibTeX:**
+```bibtex
+@software{singh_physai_2025,
+  author       = {Mankrit Singh},
+  title        = {PhysAI: Physics-Informed Neural Networks in PyTorch},
+  month        = sep,
+  year         = 2025,
+  publisher    = {Zenodo},
+  version      = {2.5.7},
+  doi          = {10.5281/zenodo.17214725},
+  url          = {https://doi.org/10.5281/zenodo.17214725}
 }
 ```
 
@@ -173,8 +186,13 @@ If you use **PhysAI** in your research, please cite it as:
 
 ## **License**
 
-MIT License. See [LICENSE](LICENSE) file.
+Apache License. See [LICENSE](LICENSE) file.
 
 ---
+
+**Important Notice: Ethical Use Required**  
+This software **must not be used for malicious, illegal, or unethical purposes**.  
+Misuse of the library voids your license under the Ethical Use Clause.
+
 
 **Solve physics problems with PINNs and visualize them interactively!**
