@@ -9,8 +9,8 @@
 [![▶ Open Demo Site](https://img.shields.io/badge/Site_&_Demo-View%20the%20site-FFDB3A)](https://ms-agi.github.io/PhysAI/)
 
 ---
-
-##### This animation was generated using PhysAI's built-in Schrödinger Residual Function and trained on the pre-built PINN in just 500 epochs!
+#### Power Of PhysAI
+##### This animation was generated using PhysAI's built-in 2D Schrödinger Residual Function and trained on the pre-built PINN in just 500 epochs!
 <a href="https://ms-agi.github.io/PhysAI" target="_blank" style="text-decoration:none;">
     <img align="center" src="assets/a.gif" alt="Wavefunction evolution animation" href="https://ms-agi.github.io/PhysAI" style="width:50%; border-radius:12px; box-shadow:0 10px 15px rgba(0,0,0,0.15); display:block; margin-top:500px;" />
 </a>
