@@ -8,9 +8,7 @@
 [![DOI](https://zenodo.org/badge/1064030431.svg)](https://doi.org/10.5281/zenodo.17214724)
 [![▶ Open Demo Site](https://img.shields.io/badge/Site_&_Demo-View%20the%20site-FFDB3A)](https://ms-agi.github.io/PhysAI/)
 
-<a href="https://ms-agi.github.io/PhysAI" target="_blank" style="text-decoration:none;">
-    <img align="right" src="assets/a.gif" alt="Wavefunction evolution animation" href="https://ms-agi.github.io/PhysAI" style="width:40%; border-radius:12px; box-shadow:0 10px 15px rgba(0,0,0,0.15); display:block; margin-top:500px;" />
-</a>
+![Wavefunction |ψ(x,t)| evolution over time](assets/a.gif)
 
 ## **Overview**
 
