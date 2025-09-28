@@ -21,8 +21,10 @@ class Trainer:
         self.model.to(self.device)
         self.history = {"total_loss": [], "res_loss": [], "bc_loss": []}
         # Disable AMP for complex PDEs (e.g., schrodinger) due to PyTorch limitations
-        self.use_amp = self.device.startswith("cuda") and pde_type != "schrodinger"
+        # self.use_amp = self.device.startswith("cuda") and pde_type != "schrodinger"
+        self.use_amp = False
         self.scaler = GradScaler(enabled=self.use_amp)
+        
 
     def train(self, epochs=1000, lr=1e-3, scheduler_fn=None, clip_grad=None, verbose=True, **kwargs):
         optimizer = optim.Adam(self.model.parameters(), lr=lr)
@@ -53,7 +55,7 @@ class Trainer:
         # Training loop
         # -----------------------------
         for epoch in range(epochs):
-            optimizer.zero_grad()
+            optimizer.zero_grad(set_to_none=True)  # FIXED: Efficient zero_grad (reduces GPU memory)
             # Use autocast only if enabled
             ctx = autocast(device_type=self.device, enabled=self.use_amp)
             with ctx:
@@ -61,29 +63,60 @@ class Trainer:
                     self.model, x, self.pde_type, bc_points=bc_x, bc_values=bc_y, **kwargs
                 )
 
+            # FIXED: Ensure total is scalar for backward (safety, handles non-scalar rare cases)
+            if total.dim() > 0:
+                total = total.mean()
+            # If complex (rare), take real part for scalar backward
+            if hasattr(total, 'is_complex') and total.is_complex():
+                total = total.real
+
             if self.use_amp:
-                self.scaler.scale(total).backward()
-                if clip_grad:
-                    self.scaler.unscale_(optimizer)
+                # Scale and backward
+                scaled_loss = self.scaler.scale(total)
+                scaled_loss.backward()
+
+                # FIXED: Always unscale before step (required for inf checks, even without clipping)
+                self.scaler.unscale_(optimizer)
+
+                # Optional clipping (after unscale)
+                if clip_grad is not None:
                     torch.nn.utils.clip_grad_norm_(self.model.parameters(), clip_grad)
-                self.scaler.step(optimizer)
-                self.scaler.update()
+
+                # Step and update (now with inf checks recorded)
+                try:  # FIXED: Optional fallback if AMP re-enabled and assertion hits
+                    self.scaler.step(optimizer)
+                    self.scaler.update()
+                except AssertionError as e:
+                    if "No inf checks" in str(e):
+                        print(f"Epoch {epoch+1}: AMP fallback to FP32 (inf checks missing)")
+                        for group in optimizer.param_groups:
+                            for p in group['params']:
+                                if p.grad is not None:
+                                    p.grad.data.div_(self.scaler.get_scale())
+                        optimizer.step()
+                        self.scaler.update()
+                    else:
+                        raise e
             else:
                 total.backward()
-                if clip_grad:
+
+                # Optional clipping (FP32)
+                if clip_grad is not None:
                     torch.nn.utils.clip_grad_norm_(self.model.parameters(), clip_grad)
+
                 optimizer.step()
 
             if scheduler:
                 scheduler.step()
 
-            self.history["total_loss"].append(total.item())
-            self.history["res_loss"].append(res_l.item())
-            self.history["bc_loss"].append(bc_l.item())
+            # Detach for logging (avoid graph buildup)
+            self.history["total_loss"].append(total.detach().item())
+            self.history["res_loss"].append(res_l.detach().item())
+            self.history["bc_loss"].append(bc_l.detach().item())
 
             if verbose and (epoch % max(epochs // 10, 1) == 0 or epoch == epochs - 1):
-                print(f"Epoch {epoch+1}/{epochs} | Total: {total.item():.6e} | "
-                      f"Res: {res_l.item():.6e} | BC: {bc_l.item():.6e}")
+                print(f"Epoch {epoch+1}/{epochs} | Total: {total.detach().item():.6e} | "
+                      f"Res: {res_l.detach().item():.6e} | BC: {bc_l.detach().item():.6e}")
 
         return self.history
 
