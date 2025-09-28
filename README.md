@@ -2,10 +2,27 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/physai.svg)](https://pypi.org/project/physai/)
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
-[![Modified License: Apache 2.0 (Modified)](https://img.shields.io/badge/License-Modified-indigo.svg)](https://opensource.org/licenses/apache-2-0)
+[![Modified License: Apache 2.0 (Modified)](https://img.shields.io/badge/Apache_License_2.0-Modified-indigo.svg)](https://opensource.org/licenses/apache-2-0)
 ![PyPI - Total Downloads](https://img.shields.io/pypi/dw/physai?color=blue&label=Weekly%20Downloads)
 [![Socket Badge](https://badge.socket.dev/pypi/package/physai/2.5.7?artifact_id=tar-gz)](https://badge.socket.dev/pypi/package/physai/2.5.7?artifact_id=tar-gz)
 [![DOI](https://zenodo.org/badge/1064030431.svg)](https://doi.org/10.5281/zenodo.17214724)
+[![▶ Open Demo Site](https://img.shields.io/badge/Site_&_Demo-View%20the%20site-FFDB3A)](https://ms-agi.github.io/PhysAI/)
+
+
+<div style="float:right; width:40%; margin-left:20px; margin-bottom:10px; box-shadow:0 10px 15px rgba(0,0,0,0.3); border-radius:12px;">
+  <p style="text-align:center; font-weight:bold; font-size:16px; color:lightblue; margin:0.5rem;">
+    THE POWER OF PHYSAI
+  </p>
+  <p style="text-align:center; font-weight:bold; font-size:18px; margin:0.5rem;">
+    This animation was generated only using PhysAI's built-in 2D Schrödinger Residual Function and trained on the pre-built PINN on just 500 Epochs!
+  </p>
+  <img src="assets/a.gif" style="width:100%; border-radius:12px; display:block; margin:auto;" />
+  <p style="text-align:center; font-style:italic; color:gray; margin-top:0.5rem;">
+    Wavefunction |ψ(x,t)| evolution over time
+  </p>
+</div>
+
+
 
 ---
 

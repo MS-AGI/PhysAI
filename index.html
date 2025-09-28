@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhysAI - Schrödinger Evolution Demo</title>
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans">
+
+  <!-- Header -->
+  <header class="bg-blue-900 text-white py-8 shadow-md">
+    <div class="container mx-auto text-center">
+      <h1 class="text-4xl md:text-5xl font-bold mb-2">PhysAI</h1>
+      <p class="text-lg md:text-xl">Physics-Informed Neural Networks in Python</p>
+    </div>
+  </header>
+
+  <!-- Schrödinger Video Section -->
+  <section class="container mx-auto my-12 px-4">
+    <h2 class="text-3xl font-bold text-center mb-6">Example of 2D Animation of Schrödinger Wavefunction Evolution</h2>
+    <div class="flex justify-center">
+      <video class="rounded-lg shadow-lg" width="640" autoplay loop muted controls>
+        <source src="assets/a.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+    <p class="text-center mt-4 text-gray-600">Wavefunction |ψ(x,t)| evolution over time</p>
+    <p class="text-center text-xl font-bold mt-4 text-black-600">This animation was generated only using PhysAI's built-in Schrodinger Residual Function and trained on the pre-built PINN on just 500 Epochs!</p>
+  </section>
+
+  <!-- Overview Section -->
+  <section class="bg-white py-12 shadow-inner">
+    <div class="container mx-auto px-4 max-w-4xl">
+      <h2 class="text-3xl font-bold mb-6">Overview</h2>
+      <p class="mb-4">PhysAI is a Python package for solving <strong>ODEs and PDEs</strong> using <strong>Physics-Informed Neural Networks (PINNs)</strong>. It integrates physics directly into neural network training, allowing the solution of classic physics problems without relying on traditional numerical solvers.</p>
+      <p class="mb-4 font-semibold">PhysAI supports a wide range of physics problems including:</p>
+      <ul class="list-disc list-inside mb-4 space-y-2">
+        <li><strong>ODEs:</strong> Logistic growth, Newton’s law of cooling, damped/simple harmonic oscillators, Markov processes.</li>
+        <li><strong>PDEs:</strong> Heat equation, wave equation, Burgers' equation, KdV equation, convection-diffusion.</li>
+        <li><strong>Quantum Mechanics:</strong> Schrödinger equation.</li>
+        <li><strong>Electromagnetism & Quantum Phenomena:</strong> Planck’s law, photoelectric effect.</li>
+        <li><strong>Fluid Dynamics:</strong> 2D incompressible Navier-Stokes.</li>
+        <li><strong>Static Problems:</strong> Laplace and Poisson equations (2D/3D).</li>
+      </ul>
+      <p class="mb-4 font-semibold">Key features:</p>
+      <ul class="list-disc list-inside space-y-2">
+        <li>Flexible <strong>PDE/ODE residual computation</strong> for various physics laws.</li>
+        <li><strong>Mixed-precision training</strong> for faster computation on GPUs.</li>
+        <li>Gradient clipping and learning rate schedulers supported.</li>
+        <li><strong>Visualization and animations</strong> of solutions using matplotlib.</li>
+        <li>Weighted loss functions combining residual and boundary conditions.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Installation -->
+  <section class="container mx-auto my-12 px-4 max-w-4xl">
+    <h2 class="text-3xl font-bold mb-6">Installation</h2>
+    <pre class="bg-gray-200 p-4 rounded-lg overflow-x-auto text-sm">
+git clone https://github.com/yourusername/physai.git
+cd physai
+pip install -r requirements.txt
+    </pre>
+    <p class="mt-2 text-gray-600">Python >= 3.10 recommended.</p>
+  </section>
+
+  <!-- Repository Structure -->
+  <section class="bg-white py-12 shadow-inner">
+    <div class="container mx-auto px-4 max-w-4xl">
+      <h2 class="text-3xl font-bold mb-6">Repository Structure</h2>
+      <pre class="bg-gray-100 p-4 rounded-lg overflow-x-auto text-sm">
+physai/
+├── __init__.py
+├── models.py
+├── trainer.py
+├── visualization.py
+├── pde_residual.py
+├── losses.py
+├── utils.py 
+examples/              
+├── example_schrodinger.py
+├── example_newton_cooling.py
+├── example_markov.py
+├── example_photoelectric.py
+├── example_planck.py
+README.md             
+requirements.txt      
+.gitignore             
+      </pre>
+    </div>
+  </section>
+
+  <!-- Quick Start Example -->
+  <section class="container mx-auto my-12 px-4 max-w-4xl">
+    <h2 class="text-3xl font-bold mb-6">Quick Start Example</h2>
+    <pre class="bg-gray-200 p-4 rounded-lg overflow-x-auto text-sm">
+import torch
+from physai.models import PINN
+from physai.pde_residual import pde_residual
+from physai.losses import pinn_loss
+from physai.visualization import plot_1d_solution
+
+# Define a 1D logistic growth ODE
+def logistic(x, y):
+    r, K = 1.0, 1.0
+    return torch.autograd.grad(y, x, grad_outputs=torch.ones_like(y), create_graph=True)[0] - r*y*(1 - y/K)
+
+# Create a PINN model
+model = PINN(layers=[1, 20, 20, 1], activation='tanh')
+
+# Training points
+x_train = torch.linspace(0, 5, 100).reshape(-1,1)
+
+# Train the model
+from physai.trainer import Trainer
+trainer = Trainer(model, collocation_points=x_train, pde_type='logistic')
+history = trainer.train(epochs=500, lr=1e-3)
+
+# Plot solution
+plot_1d_solution(model, x_train, title='Logistic Growth')
+    </pre>
+  </section>
+
+  <!-- Footer / Citation -->
+  <footer class="bg-blue-900 text-white py-8 mt-12">
+    <div class="container mx-auto text-center max-w-4xl px-4">
+      <h3 class="text-xl font-bold mb-2">Citation</h3>
+      <p>If you use <strong>PhysAI</strong> in research, please cite:</p>
+      <p class="mt-2 text-gray-200">
+        Singh, M. (2025). <em>PhysAI: Physics-Informed Neural Networks in PyTorch</em> (Version 2.5.7) [Computer software]. Zenodo. <br>
+        DOI: <a href="https://doi.org/10.5281/zenodo.17214725" class="underline hover:text-yellow-300">https://doi.org/10.5281/zenodo.17214725</a>
+      </p>
+      <p class="mt-4 text-gray-300 text-sm">Apache License | Ethical use required</p>
+    </div>
+  </footer>
+
+</body>
+</html>
