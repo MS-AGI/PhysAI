@@ -238,4 +238,38 @@ def pde_residual(model, inputs, pde_type, **kwargs):
         f = kwargs.get("f", lambda x,y,z: torch.zeros_like(x))
         return derivative(u_val, x, 2) + derivative(u_val, y, 2) + derivative(u_val, z, 2) - f(x,y,z)
     
+        
+    if pde_type == "faraday":  # Faraday's Law (Completed)
+        E = kwargs.get("E", u_val)
+        x = inputs_for_model[:,0:1].requires_grad_(True)
+        t = inputs_for_model[:,1:2].requires_grad_(True)
+        if u_val.is_complex():
+            curl_E = torch.complex(derivative(E.real, x), derivative(E.imag, x))  # Simplified for 1D
+            dB_dt = torch.complex(derivative(u_val.real, t), derivative(u_val.imag, t))
+            return curl_E + dB_dt  # ∇ × E + ∂B/∂t = 0
+        curl_E = derivative(E, x)  # Assume simplified curl
+        dB_dt = derivative(u_val, t)
+        return curl_E + dB_dt  # Full residual
+    
+    if pde_type == "ampere":  # Ampere's Law with Maxwell's correction
+        x = inputs_for_model[:,0:1].requires_grad_(True)
+        t = inputs_for_model[:,1:2].requires_grad_(True)
+        J = kwargs.get("J", lambda x: torch.zeros_like(x))
+        epsilon0 = kwargs.get("epsilon0", 1.0)
+        mu0 = kwargs.get("mu0", 1.0)
+        
+        if u_val.is_complex():  # Assuming u_val is B
+            curl_B = torch.complex(derivative(u_val.real, x), derivative(u_val.imag, x))  # Simplified 1D curl
+            E = kwargs.get("E", u_val)  # Get E, default to u_val if not provided
+            dE_dt = torch.complex(derivative(E.real, t), derivative(E.imag, t))
+            residual = curl_B - mu0 * J(inputs_for_model) - mu0 * epsilon0 * dE_dt
+            return residual  # Return the full complex residual, or .real if needed
+        else:
+            curl_B = derivative(u_val, x)  # Simplified 1D curl
+            E = kwargs.get("E", u_val)
+            dE_dt = derivative(E, t)
+            residual = curl_B - mu0 * J(inputs_for_model) - mu0 * epsilon0 * dE_dt
+            return residual  # Return the residual
+
+    
     raise ValueError(f"PDE/ODE type '{pde_type}' not implemented")
