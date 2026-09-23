@@ -231,7 +231,7 @@
       <li><strong>Three model architectures</strong> — a Fourier-feature PINN (<code>physai.models.pinn</code>), a Fourier Neural Operator (<code>physai.models.fno</code>, Li et al. 2020), and a Chebyshev-basis USENO (<code>physai.models.spectral_element</code> / <code>spectralpinn</code>) with C⁰/C¹ interface-continuity losses for stiff multiphysics problems.</li>
       <li><strong><code>AutoOptimizer</code></strong> — reads equation order, nonlinearity, and stiffness to emit a frozen <code>RuntimeConfig</code>: learning rate, optimizer choice, collocation-point density, loss weighting, warm-up schedule, network size, and precision.</li>
       <li><strong>Arbitrary geometry via SDFs</strong> — box, ball, cylinder, half-space, ellipsoid, torus, capsule, 2-D polygon primitives; CSG combinators; user-defined SDFs; mesh import (<code>.stl</code>/<code>.obj</code>/<code>.ply</code>/<code>.off</code>); Dirichlet/Neumann/Robin/periodic boundary conditions on arbitrary regions.</li>
-      <li><strong>Numerical cross-validation against Dedalus</strong> — <code>Trainer.cross_validate(...)</code> runs an independent classical solve (a real Dedalus spectral solve, or embedded-boundary finite differences on arbitrary geometry) and reports L2 error against the trained network on the same grid.</li>
+      <li><strong>Numerical cross-validation</strong> — <code>Trainer.cross_validate(...)</code> compares the model with an independent Dedalus box solve, embedded-boundary finite differences, or optional native solver adapters for FiPy, FEniCS, FEniCSx, and Meep.</li>
       <li><strong>Physics-focused visualization</strong> — loss-history, residual-field, spectrum, and 1-D/2-D plots, plus an N-D toolkit for slicing, projection, isosurfaces, and animation.</li>
       <li><strong>Multi-backend by construction</strong> — <code>AbstractBackend</code> fixes the tensor/autodiff/optimizer surface; <code>TorchBackend</code>, <code>JAXBackend</code>, <code>TensorFlowBackend</code>, and <code>PaddleBackend</code> each implement it, so residuals and losses are written once and run correctly on all four.</li>
       <li><strong>Optional, consent-gated extras</strong> — a live terminal dashboard (<code>rich</code>) with an optional local-LLM chat panel, and a bundled Conda installer for Dedalus, FiPy, FEniCS, FEniCSx, Meep, and CuPy. Nothing installs on <code>pip install</code>/<code>import physai</code>; setup is user-invoked and inert in CI.</li>
@@ -253,6 +253,7 @@ pip install "physai[all]"          # every backend and feature extra above</code
     <pre><code>git clone https://github.com/MS-AGI/PhysAI.git
 cd PhysAI
 pip install -e ".[jax,tensorflow,dashboard]"</code></pre>
+    <p class="section-sub" style="margin-top:1.5rem;">Optional classical solvers use a separate Conda environment. Run <code>python -m physai.solver_setup</code>, activate <code>physai-solvers</code>, then install PhysAI in that environment with <code>python -m pip install physai</code>. The installer includes Dedalus, FiPy, classic FEniCS, FEniCSx, Meep, and CuPy.</p>
     <div class="pill-row">
       <span class="pill">Python ≥ 3.9</span>
       <span class="pill">Solver dependencies on request via physai.install_solver_dependencies()</span>
@@ -305,7 +306,7 @@ requirements.txt</code></pre>
     <pre><code>python examples/maxwell_animation.py</code></pre>
 
     <h3>2. Solve the wave equation and cross-validate</h3>
-    <p>Trains the first-order state (u, v) and compares both fields with an independent Dedalus solve. Install the optional Dedalus dependency. Source: <a href="examples/wave_cross_validation.py">examples/wave_cross_validation.py</a>.</p>
+    <p>Trains the first-order state (u, v) and compares both fields with an independent Dedalus solve. Requires the Conda solver environment; see the Installation section. Source: <a href="examples/wave_cross_validation.py">examples/wave_cross_validation.py</a>.</p>
     <pre><code>python examples/wave_cross_validation.py</code></pre>
 
     <h3>3. Fit a Schwarzschild exterior with the Einstein field residual</h3>
@@ -333,6 +334,13 @@ requirements.txt</code></pre>
     </div>
   </section>
 
+  <!-- Numerical Cross-Validation -->
+  <section class="block" id="numerical-cross-validation">
+    <h2 class="section-title">Numerical Cross-Validation</h2>
+    <p class="section-sub"><code>Trainer.cross_validate(...)</code> evaluates a trained model at points from an independent classical solve and reports L2 errors. Box problems use Dedalus spectral methods; arbitrary geometries use the embedded-boundary finite-difference solver, currently for Poisson, Helmholtz, and heat; optional native adapters support FiPy, FEniCS, FEniCSx, and Meep. Native adapters accept solver-specific inputs through <code>solver_kwargs</code>; Meep and custom result types may need a result adapter.</p>
+    <p class="section-sub">The native solver packages are installed through the bundled Conda environment. Run <code>python -m physai.solver_setup</code>, activate <code>physai-solvers</code>, and install PhysAI in that environment before using these adapters.</p>
+  </section>
+
   <!-- Testing -->
   <section class="block" id="testing">
     <h2 class="section-title">Testing</h2>
@@ -341,7 +349,7 @@ requirements.txt</code></pre>
       <tr><th>Tier</th><th>What it checks</th></tr>
       <tr><td><strong>Tier A</strong></td><td>Every one of the 57 registered equations trains for a few steps on a simple domain and is checked for finite, non-diverging loss — a mechanical pipeline test, not a convergence claim.</td></tr>
       <tr><td><strong>Tier B</strong></td><td>A curated subset with hand-verified closed-form solutions, trained on a harder off-center domain with mixed Dirichlet/Neumann boundary conditions, checked against the analytic solution on held-out interior points.</td></tr>
-      <tr><td><strong>Tier C</strong></td><td>Cross-validation against real Dedalus spectral-solver output for a curated subset; skipped automatically if <code>dedalus</code> isn't installed.</td></tr>
+      <tr><td><strong>Tier C</strong></td><td>Cross-validation against real Dedalus spectral-solver output for a curated subset; skipped automatically when Dedalus is not installed in the active environment.</td></tr>
     </table>
     <pre style="margin-top:1.5rem;"><code>pytest tests/test_pde_everything.py -v</code></pre>
   </section>

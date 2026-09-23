@@ -10,7 +10,7 @@
 [![▶ Open Demo Site](https://img.shields.io/badge/Site_&_Demo-View%20the%20site-FFDB3A)](https://ms-agi.github.io/PhysAI/)
 
 
-> [Click Here to Jump to Citation](#citation) | If you use PhysAI, neural operators, or its cross-validation tools in academic work, please cite the project using [DOI 10.5281/zenodo.17214724](https://doi.org).
+> [Jump to Citation](#citation) | If you use PhysAI, neural operators, or its cross-validation tools in academic work, please cite [DOI 10.5281/zenodo.17214724](https://doi.org/10.5281/zenodo.17214724).
 
 ### Unified Operator Synthesis & Cross-Validation
 
@@ -31,7 +31,7 @@ PhysAI is an open-source, multi-backend framework for solving partial differenti
 
 **PhysAI** is a research library for approximating solutions to partial and ordinary differential equations with neural networks, built around the physics rather than around any single deep learning framework. It implements **Physics-Informed Neural Networks (PINNs)**, **Fourier Neural Operators (FNOs)**, and a **Unified Spectral Element Neural Operator (USENO)** on a common backend abstraction spanning **PyTorch, JAX, TensorFlow, and PaddlePaddle**, so the same governing equation, domain, and boundary/initial conditions train identically regardless of which deep learning framework a given lab, cluster, or paper already standardizes on.
 
-The library is organized around the physics problem, not the network architecture: a **registry of 57 governing equations** — elliptic and parabolic PDEs, the compressible and incompressible Navier–Stokes and Euler systems, the linear and nonlinear Schrödinger equation, reaction–diffusion and pattern-formation systems, stochastic/kinetic (Fokker–Planck) equations, and relativistic and quantum-field residuals spanning the Dirac equation, the Einstein field equations, and quantum-gas statistics — an **SDF/CSG-based arbitrary-geometry system** for domains beyond a box or ball, a heuristic **AutoOptimizer** that reads the order, nonlinearity, and stiffness of a chosen equation to size the network and pick a training schedule, and a **numerical cross-validation path against Dedalus**, so a trained network's error can be checked against a genuine independent solve of the same equation, not only against a closed-form solution when one happens to exist.
+The library is organized around the physics problem, not the network architecture: a **registry of 57 governing equations** — elliptic and parabolic PDEs, the compressible and incompressible Navier–Stokes and Euler systems, the linear and nonlinear Schrödinger equation, reaction–diffusion and pattern-formation systems, stochastic/kinetic (Fokker–Planck) equations, and relativistic and quantum-field residuals spanning the Dirac equation, the Einstein field equations, and quantum-gas statistics — an **SDF/CSG-based arbitrary-geometry system** for domains beyond a box or ball, a heuristic **AutoOptimizer** that reads the order, nonlinearity, and stiffness of a chosen equation to size the network and pick a training schedule, and **independent numerical cross-validation** through Dedalus, embedded-boundary finite differences, or optional native solver adapters.
 
 ### What's actually here
 
@@ -39,7 +39,7 @@ The library is organized around the physics problem, not the network architectur
 * **Three model architectures**: a Fourier-feature PINN (`physai.models.pinn`), a Fourier Neural Operator (`physai.models.fno`, following Li et al., 2020), and a Chebyshev-basis Unified Spectral Element Neural Operator (`physai.models.spectral_element` / `spectralpinn`, following the USENO formulation of Feugmo & Pankaczy) with C⁰ (value) and C¹ (flux) interface-continuity losses for stiff multiphysics problems.
 * **`AutoOptimizer`**: reads equation order, nonlinearity, and stiffness to emit a frozen `RuntimeConfig` — learning rate, optimizer choice (Adam, with an optional L-BFGS fine-tuning phase), collocation-point density, residual/boundary loss weighting, warm-up/curriculum schedule, network width and depth, and float32 vs. float64 precision.
 * **Arbitrary geometry via signed distance functions**: primitives (box, ball, cylinder, half-space, ellipsoid, torus, capsule, 2-D polygon), CSG combinators (`union`, `intersection`, `difference`, `smooth_union`, `invert`), user-defined SDFs as plain Python callables, and mesh import (`.stl`/`.obj`/`.ply`/`.off`) — with a `BoundaryConditionSet` attaching Dirichlet, Neumann, Robin, or periodic conditions to arbitrary regions of the boundary (`face_region`, `everywhere`, or a custom predicate).
-* **Numerical cross-validation against Dedalus**, not only closed forms: `Trainer.cross_validate(...)` runs an independent classical solve of the same equation — a genuine Dedalus spectral solve (tensor-product Chebyshev/Fourier bases, box domains) or an embedded-boundary finite-difference solve on the same arbitrary geometry the network was trained on — and reports the L2 error between the two, on the same evaluation grid. See [Numerical Cross-Validation](#numerical-cross-validation).
+* **Numerical cross-validation**, not only closed forms: `Trainer.cross_validate(...)` compares model outputs with independent Dedalus, embedded-boundary finite-difference, or optional native solver results. See [Numerical Cross-Validation](#numerical-cross-validation).
 * **Physics-focused visualization and animation**: loss-history, residual-field, spectrum, and 1-D/2-D solution plots, plus a dedicated N-dimensional toolkit — slicing, projection, volumetric isosurface rendering, and time or parameter-sweep animation — for fields with three, four, or more axes. See [Visualization and Animation](#visualization-and-animation).
 * **Multi-backend by construction**, not by wrapping one framework: `AbstractBackend` fixes the tensor/autodiff/optimizer surface, and `TorchBackend`, `JAXBackend`, `TensorFlowBackend`, and `PaddleBackend` each implement it, so residuals and losses are written once against the abstraction and run correctly on all four.
 * **Optional, consent-gated extras**: a live terminal training dashboard (`rich`) with an optional local-LLM chat side panel (`llama-cpp-python`), and a bundled Conda installer for Dedalus, FiPy, FEniCS, FEniCSx, Meep, and CuPy — nothing installs on `pip install`/`import physai`; setup is user-invoked and stays inert in CI/headless environments.
@@ -123,7 +123,7 @@ python examples/maxwell_animation.py
 
 ### 2. Solve the wave equation and cross-validate
 
-This example trains the first-order state `(u, v)` for the wave equation and compares both fields with an independent Dedalus solve. Install the optional Dedalus dependency to run it. See [examples/wave_cross_validation.py](examples/wave_cross_validation.py).
+This example trains the first-order state `(u, v)` for the wave equation and compares both fields with an independent Dedalus solve. It requires the Conda solver environment: run `python -m physai.solver_setup`, activate `physai-solvers`, install PhysAI there with `python -m pip install physai`, then run the command below. See [examples/wave_cross_validation.py](examples/wave_cross_validation.py).
 
 ~~~bash
 python examples/wave_cross_validation.py
@@ -168,16 +168,17 @@ Equations under active development for a future release, extending the library's
 * **Maxwell's Equations** — the full coupled electromagnetic field system, extending the library's current electromagnetism coverage beyond the drift–diffusion/Poisson treatment in `drift_diffusion_poisson`.
 * **Group Field Theory** — residuals for group field theory models, relevant to quantum-gravity and quantum-gravity-adjacent research.
 
-This list reflects current development priorities and is not a commitment to a specific release date. Contributions and equation requests are welcome via GitHub Discussions and Issues.
+The planned Maxwell item refers to a built-in full-system residual; the examples include a user-registered one-dimensional vacuum reduction. This list reflects current development priorities and is not a commitment to a specific release date. Contributions and equation requests are welcome via GitHub Discussions and Issues.
 
 ---
 
 ## Numerical Cross-Validation
 
-Beyond checking a trained network against a closed-form solution (available for only a curated subset of equations), `Trainer.cross_validate(...)` checks it against an **independent classical numerical solve** of the same governing equation, run by `physai.solvers.solver.Solver`, and reports the L2 error between the two on a shared evaluation grid. Two solve paths are dispatched from the same method:
+Beyond checking a trained network against a closed-form solution (available for only a curated subset of equations), `Trainer.cross_validate(...)` compares it with an **independent classical numerical solve** through `physai.solvers.solver.Solver`. The model is evaluated on the classical solver's coordinates, and the method reports absolute and relative L2 errors. It supports three paths:
 
-* **Box domains** (`geometry=None`, the default) — a genuine [Dedalus](https://dedalus-project.org/) spectral solve (`Solver.solve_box`): a tensor-product Chebyshev/Fourier basis per axis, Dedalus's own IVP solver and tau-correction compiler, and its own independent timestepper and discretization. Requires `domain_type`, `bounds`, `variables`, `equations`, `bcs`, and `ics`; `domain_type`/`bounds`/`grid_points` each accept either a single value (applied to every axis) or a per-axis list, so this path is not limited to one spatial dimension.
-* **Arbitrary geometry** (`geometry=<a physai.geometry.Geometry>`) — an embedded-boundary finite-difference solve (`Solver.solve_geometry`) on a masked regular N-D grid, assembled with `scipy.sparse` (or `cupyx.scipy.sparse` on GPU, if `array_module="cupy"`). Dedalus's own spectral bases are built for boxes and specific curvilinear coordinate systems, not arbitrary CSG/SDF domains, so this path exists specifically for geometries Dedalus can't represent. **Currently scoped to `"poisson"`, `"helmholtz"`, and `"heat"`**.
+* **Box domains** (`geometry=None`, the default) — a Dedalus spectral solve (`Solver.solve_box`) using tensor-product Chebyshev/Fourier bases. It requires `domain_type`, `bounds`, `variables`, `equations`, `bcs`, and `ics`; the axis settings accept one value for all axes or a per-axis list. Install the Conda solver stack, activate `physai-solvers`, and install PhysAI in that environment before running this path.
+* **Arbitrary geometry** (`geometry=<a physai.geometry.Geometry>`) — an embedded-boundary finite-difference solve (`Solver.solve_geometry`) on a masked regular N-D grid, assembled with `scipy.sparse` or `cupyx.scipy.sparse` when `array_module="cupy"`. This path does not require Dedalus and currently supports `"poisson"`, `"helmholtz"`, and `"heat"`.
+* **Native solver adapters** — pass `solver_method="fipy"`, `"fenics"`, `"fenicsx"`, or `"meep"` and its native arguments through `solver_kwargs`. For a custom adapter, register it with `register_solver`; `register_equation_solver` can associate a PDE name with a solver. FiPy and scalar finite-element results are normalized automatically. For Meep or a custom result format, pass `classical_result_adapter` that returns coordinates and named values. These packages are installed in the same Conda environment by `physai.install_solver_dependencies()`.
 
 ```python
 metrics = trainer.cross_validate(
@@ -190,7 +191,7 @@ metrics = trainer.cross_validate(
     stop_time=0.1,
     grid_points=128,
 )
-# {"u_l2_abs": ..., "u_l2_rel": ...}
+# {"u_l2_abs": ..., "u_l2_rel": ..., "u_n_compared": ...}
 ```
 
 Nothing about training is touched by calling `cross_validate` — it runs the classical solve independently, evaluates the trained model at the same grid points, and returns the comparison.
@@ -204,7 +205,7 @@ The end-to-end suite lives in `tests/` and runs across every backend whose under
 
 * **Tier A** — every one of the 57 registered equations trains for a few steps on a simple domain and is checked for finite, non-diverging loss. A mechanical pipeline test (geometry sampling, BC/IC wiring, `AutoOptimizer` sizing, and the training loop all run), not a convergence claim.
 * **Tier B** — a curated subset with independently hand-verified closed-form solutions, trained on a deliberately harder off-center domain with mixed Dirichlet/Neumann boundary conditions, and checked against the analytic solution on held-out interior points. A mechanical counterpart of the same hard geometry/BC/IC also runs across the full 57-equation registry, without requiring a known solution.
-* **Tier C** — cross-validation against real Dedalus spectral-solver output for a small curated subset; skipped automatically if `dedalus` isn't installed.
+* **Tier C** — cross-validation against real Dedalus spectral-solver output for a small curated subset; skipped automatically when Dedalus is not installed in the active environment.
 
 ```bash
 pytest tests/test_pde_everything.py -v
