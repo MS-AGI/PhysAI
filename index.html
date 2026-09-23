@@ -1,140 +1,407 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PhysAI - Schrödinger Evolution Demo</title>
-  <!-- Tailwind CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>PhysAI: A Multi-Backend Physics-Informed Neural Network Library for PDE Solving at Research Scale</title>
+<style>
+  :root {
+    --bg: #030712;
+    --bg-panel: #0b1120;
+    --border: rgba(255,255,255,0.08);
+    --text: #f3f4f6;
+    --text-muted: #9ca3af;
+    --text-dim: #6b7280;
+    --accent1: #9a91fb;
+    --accent2: #a13ef8;
+    --accent3: #5706d1;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6;
+  }
+  a { color: inherit; }
+  .container { max-width: 1000px; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* ---------- Nav ---------- */
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(3,7,18,0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    max-width: 1000px; margin: 0 auto; padding: 0.9rem 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-brand { font-weight: 800; letter-spacing: -0.01em; }
+  .nav-links { display: flex; gap: 1.5rem; font-size: 0.9rem; color: var(--text-muted); }
+  .nav-links a { text-decoration: none; }
+  .nav-links a:hover { color: var(--text); }
+  @media (max-width: 640px) { .nav-links { display: none; } }
+
+  /* ---------- Hero ---------- */
+  .attention-hero {
+    position: relative;
+    padding: 7rem 2rem 6rem;
+    display: flex; justify-content: center; align-items: center;
+    text-align: center;
+    overflow: hidden;
+  }
+  .hero-glow-1, .hero-glow-2 {
+    position: absolute; width: 400px; height: 400px; border-radius: 50%;
+    filter: blur(120px); opacity: 0.15; z-index: 1; pointer-events: none;
+  }
+  .hero-glow-1 { background: #3b82f6; top: -10%; left: 20%; }
+  .hero-glow-2 { background: #8b5cf6; bottom: -10%; right: 20%; }
+  .hero-content { position: relative; z-index: 2; max-width: 850px; margin: 0 auto; }
+
+  .badge, .citation-box {
+    display: inline-flex; align-items: center; justify-content: center;
+    text-decoration: none; padding: 0.5rem 1rem;
+    background: rgba(98,96,96,0.31); border: 1px solid var(--border);
+    border-radius: 9999px; font-weight: 700; color: var(--accent1);
+    margin-bottom: 1.25rem; transition: all 0.2s ease;
+  }
+  .badge:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
+
+  .citation-box {
+    display: flex; width: 100%; padding: 0.75rem 1.25rem; text-align: left;
+    background: rgba(137,4,4,0.18); border: 1px solid rgba(255,176,176,0.5);
+    border-radius: 16px; color: #f3d9d9; font-weight: 400; margin-bottom: 1.75rem;
+    animation: activeGlow 2.5s infinite ease-in-out;
+  }
+  @keyframes activeGlow {
+    0%   { box-shadow: 0 0 5px rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.4); }
+    50%  { box-shadow: 0 0 18px rgba(245,158,11,0.4); border-color: rgba(251,191,36,0.7); }
+    100% { box-shadow: 0 0 5px rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.4); }
+  }
+  .citation-box code {
+    background: rgba(255,255,255,0.08); padding: 0.1rem 0.35rem; border-radius: 0.25rem;
+  }
+
+  .hero-content h1 { font-size: 3.25rem; font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 1.25rem; }
+  @media (max-width: 768px) { .hero-content h1 { font-size: 2.25rem; } }
+  .text-gradient {
+    background: linear-gradient(135deg, var(--accent1), var(--accent2), var(--accent3));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .hero-content p.lead { font-size: 1.1rem; color: var(--text-muted); max-width: 720px; margin: 0 auto 2.25rem; }
+
+  .cta-group { display: flex; gap: 1rem; justify-content: center; align-items: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem;
+    white-space: nowrap; padding: 0.85rem 1.75rem; font-size: 0.95rem; font-weight: 600;
+    border-radius: 0.75rem; text-decoration: none; transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  }
+  .btn-primary { background: #ffffff; color: #0f172a; box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 0 20px rgba(99,102,241,0.25); }
+  .btn-primary:hover { background: #f3f4f6; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15), 0 0 30px rgba(99,102,241,0.45); }
+  .btn-secondary { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.15); }
+  .btn-secondary:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.35); }
+  .btn-arrow { transition: transform 0.2s cubic-bezier(0.4,0,0.2,1); }
+  .btn-primary:hover .btn-arrow { transform: translateX(4px); }
+
+  /* ---------- Sections ---------- */
+  section.block { padding: 4.5rem 0; border-top: 1px solid var(--border); }
+  section.block:first-of-type { border-top: none; }
+  h2.section-title { font-size: 1.9rem; font-weight: 800; letter-spacing: -0.01em; margin: 0 0 0.5rem; }
+  p.section-sub { color: var(--text-muted); margin: 0 0 2.25rem; max-width: 700px; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2.5rem; }
+  @media (max-width: 700px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+  .stat-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; text-align: center; }
+  .stat-card .num { font-size: 1.6rem; font-weight: 800; color: var(--accent1); }
+  .stat-card .label { font-size: 0.8rem; color: var(--text-dim); margin-top: 0.25rem; }
+
+  .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+  @media (max-width: 800px) { .card-grid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--bg-panel); border: 1px solid var(--border); border-radius: 16px;
+    padding: 1.5rem; transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+  .card:hover { border-color: rgba(154,145,251,0.4); transform: translateY(-2px); }
+  .card h3 { margin: 0 0 0.5rem; font-size: 1.05rem; }
+  .card p { margin: 0; color: var(--text-muted); font-size: 0.9rem; }
+
+  ul.feature-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.9rem; }
+  ul.feature-list li { padding-left: 1.6rem; position: relative; color: var(--text-muted); }
+  ul.feature-list li::before {
+    content: "→"; position: absolute; left: 0; color: var(--accent1); font-weight: 700;
+  }
+  ul.feature-list li strong { color: var(--text); }
+
+  pre {
+    background: #0a0f1e; border: 1px solid var(--border); border-radius: 12px;
+    padding: 1.25rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.55;
+    color: #d1d5db;
+  }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .pill-row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 1rem; }
+  .pill {
+    font-size: 0.78rem; padding: 0.3rem 0.7rem; border-radius: 999px;
+    background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text-muted);
+  }
+
+  table.notes-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  table.notes-table th, table.notes-table td { text-align: left; padding: 0.75rem 0.5rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+  table.notes-table th { color: var(--text-dim); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  table.notes-table td { color: var(--text-muted); }
+  table.notes-table td strong { color: var(--text); }
+
+  .citation-panel {
+    background: var(--bg-panel); border: 1px solid var(--border); border-radius: 16px; padding: 1.75rem;
+  }
+  .citation-panel .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); margin-bottom: 0.5rem; }
+
+  footer {
+    border-top: 1px solid var(--border); padding: 2.5rem 0; text-align: center;
+    color: var(--text-dim); font-size: 0.85rem;
+  }
+  footer a { color: var(--accent1); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+</style>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans">
+<body>
 
-  <!-- Header -->
-  <header class="bg-blue-900 text-white py-8 shadow-md">
-    <div class="container mx-auto text-center">
-      <h1 class="text-4xl md:text-5xl font-bold mb-2">PhysAI</h1>
-      <p class="text-lg md:text-xl">Physics-Informed Neural Networks in Python</p>
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="nav-brand">PhysAI</div>
+    <div class="nav-links">
+      <a href="#overview">Overview</a>
+      <a href="#installation">Installation</a>
+      <a href="#structure">Structure</a>
+      <a href="#quick-start">Quick Start</a>
+      <a href="#testing">Testing</a>
+      <a href="#citation">Citation</a>
     </div>
-  </header>
+  </div>
+</nav>
 
-  <!-- Schrödinger Video Section -->
-  <section class="container mx-auto my-12 px-4">
-    <h2 class="text-3xl font-bold text-center mb-6">Example of 2D Animation of Schrödinger Wavefunction Evolution</h2>
-    <div class="flex justify-center">
-      <video class="rounded-lg shadow-lg" width="640" autoplay loop muted controls>
-        <source src="assets/a.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-      </video>
+<section class="attention-hero">
+  <div class="hero-glow-1"></div>
+  <div class="hero-glow-2"></div>
+  <div class="hero-content">
+    <a href="#citation" class="citation-box">
+      If you leverage this library, its neural operators, or its cross-validation pipelines in academic work, please cite the repository or the official Zenodo DOI: <code>10.5281/zenodo.17214724</code>.
+    </a>
+    <a href="#testing" class="badge">Rigorously Tested — Tier A/B/C Suite</a>
+    <h1>PhysAI: <span class="text-gradient">Unified Operator Synthesis &amp; Cross-Validation</span></h1>
+    <p class="lead">
+      An open-source, multi-backend framework implementing Physics-Informed Neural Networks (PINNs), Fourier Neural
+      Operators (FNOs), and a Unified Spectral Element Neural Operator (USENO). Write a governing equation once and
+      train it with invariant performance across PyTorch, JAX, TensorFlow, and PaddlePaddle.
+    </p>
+    <div class="cta-group">
+      <a href="#installation" class="btn btn-primary">
+        Installation Guide
+        <svg class="btn-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+      <a href="#quick-start" class="btn btn-secondary">Quick Start</a>
     </div>
-    <p class="text-center mt-4 text-gray-600">Wavefunction |ψ(x,t)| evolution over time</p>
-    <p class="text-center text-xl font-bold mt-4 text-black-600">This animation was generated only using PhysAI's built-in Schrodinger Residual Function and trained on the pre-built PINN on just 500 Epochs!</p>
-  </section>
+  </div>
+</section>
 
-  <!-- Overview Section -->
-  <section class="bg-white py-12 shadow-inner">
-    <div class="container mx-auto px-4 max-w-4xl">
-      <h2 class="text-3xl font-bold mb-6">Overview</h2>
-      <p class="mb-4">PhysAI is a Python package for solving <strong>ODEs and PDEs</strong> using <strong>Physics-Informed Neural Networks (PINNs)</strong>. It integrates physics directly into neural network training, allowing the solution of classic physics problems without relying on traditional numerical solvers.</p>
-      <p class="mb-4 font-semibold">PhysAI supports a wide range of physics problems including:</p>
-      <ul class="list-disc list-inside mb-4 space-y-2">
-        <li><strong>ODEs:</strong> Logistic growth, Newton’s law of cooling, damped/simple harmonic oscillators, Markov processes.</li>
-        <li><strong>PDEs:</strong> Heat equation, wave equation, Burgers' equation, KdV equation, convection-diffusion.</li>
-        <li><strong>Quantum Mechanics:</strong> Schrödinger equation.</li>
-        <li><strong>Electromagnetism & Quantum Phenomena:</strong> Planck’s law, photoelectric effect.</li>
-        <li><strong>Fluid Dynamics:</strong> 2D incompressible Navier-Stokes.</li>
-        <li><strong>Static Problems:</strong> Laplace and Poisson equations (2D/3D).</li>
-      </ul>
-      <p class="mb-4 font-semibold">Key features:</p>
-      <ul class="list-disc list-inside space-y-2">
-        <li>Flexible <strong>PDE/ODE residual computation</strong> for various physics laws.</li>
-        <li><strong>Mixed-precision training</strong> for faster computation on GPUs.</li>
-        <li>Gradient clipping and learning rate schedulers supported.</li>
-        <li><strong>Visualization and animations</strong> of solutions using matplotlib.</li>
-        <li>Weighted loss functions combining residual and boundary conditions.</li>
-      </ul>
+<div class="container">
+
+  <!-- Overview -->
+  <section class="block" id="overview">
+    <h2 class="section-title">Overview</h2>
+    <p class="section-sub">
+      PhysAI is a research library for approximating solutions to partial and ordinary differential equations with
+      neural networks, built around the physics rather than around any single deep learning framework.
+    </p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="num">57</div><div class="label">Governing equations</div></div>
+      <div class="stat-card"><div class="num">3</div><div class="label">Model architectures</div></div>
+      <div class="stat-card"><div class="num">4</div><div class="label">Backends</div></div>
+      <div class="stat-card"><div class="num">A/B/C</div><div class="label">Test tiers</div></div>
     </div>
+
+    <ul class="feature-list">
+      <li><strong>57 governing equations</strong> — elliptic/static problems, diffusion–reaction systems, hyperbolic/wave equations, nonlinear transport, fluid dynamics, quantum and dispersive systems, kinetic/probabilistic equations, excitable media, and relativistic/quantum-field theory (general relativity, the Dirac equation, quantum-gas statistics, phonon transport).</li>
+      <li><strong>Three model architectures</strong> — a Fourier-feature PINN (<code>physai.models.pinn</code>), a Fourier Neural Operator (<code>physai.models.fno</code>, Li et al. 2020), and a Chebyshev-basis USENO (<code>physai.models.spectral_element</code> / <code>spectralpinn</code>) with C⁰/C¹ interface-continuity losses for stiff multiphysics problems.</li>
+      <li><strong><code>AutoOptimizer</code></strong> — reads equation order, nonlinearity, and stiffness to emit a frozen <code>RuntimeConfig</code>: learning rate, optimizer choice, collocation-point density, loss weighting, warm-up schedule, network size, and precision.</li>
+      <li><strong>Arbitrary geometry via SDFs</strong> — box, ball, cylinder, half-space, ellipsoid, torus, capsule, 2-D polygon primitives; CSG combinators; user-defined SDFs; mesh import (<code>.stl</code>/<code>.obj</code>/<code>.ply</code>/<code>.off</code>); Dirichlet/Neumann/Robin/periodic boundary conditions on arbitrary regions.</li>
+      <li><strong>Numerical cross-validation against Dedalus</strong> — <code>Trainer.cross_validate(...)</code> runs an independent classical solve (a real Dedalus spectral solve, or embedded-boundary finite differences on arbitrary geometry) and reports L2 error against the trained network on the same grid.</li>
+      <li><strong>Physics-focused visualization</strong> — loss-history, residual-field, spectrum, and 1-D/2-D plots, plus an N-D toolkit for slicing, projection, isosurfaces, and animation.</li>
+      <li><strong>Multi-backend by construction</strong> — <code>AbstractBackend</code> fixes the tensor/autodiff/optimizer surface; <code>TorchBackend</code>, <code>JAXBackend</code>, <code>TensorFlowBackend</code>, and <code>PaddleBackend</code> each implement it, so residuals and losses are written once and run correctly on all four.</li>
+      <li><strong>Optional, consent-gated extras</strong> — a live terminal dashboard (<code>rich</code>) with an optional local-LLM chat panel, and a bundled Dedalus installer. Nothing runs, prompts, or downloads on <code>pip install</code>/<code>import physai</code>; everything is opt-in per run and inert in CI.</li>
+    </ul>
   </section>
 
   <!-- Installation -->
-  <section class="container mx-auto my-12 px-4 max-w-4xl">
-    <h2 class="text-3xl font-bold mb-6">Installation</h2>
-    <pre class="bg-gray-200 p-4 rounded-lg overflow-x-auto text-sm">
-git clone https://github.com/yourusername/physai.git
-cd physai
-pip install -r requirements.txt
-    </pre>
-    <p class="mt-2 text-gray-600">Python >= 3.10 recommended.</p>
+  <section class="block" id="installation">
+    <h2 class="section-title">Installation</h2>
+    <p class="section-sub">A base install stays light — torch + numpy + matplotlib only. Backends and features are opt-in extras.</p>
+    <pre><code>pip install physai</code></pre>
+    <pre><code>pip install "physai[jax]"          # JAX backend (jax, flax, optax)
+pip install "physai[tensorflow]"   # TensorFlow backend
+pip install "physai[paddle]"       # PaddlePaddle backend
+pip install "physai[dashboard]"    # live terminal training dashboard (rich)
+pip install "physai[chat]"         # dashboard + local GGUF chat side panel (llama-cpp-python)
+pip install "physai[all]"          # every backend and feature extra above</code></pre>
+    <p class="section-sub" style="margin-top:1.5rem;">Or, from source:</p>
+    <pre><code>git clone https://github.com/MS-AGI/PhysAI.git
+cd PhysAI
+pip install -e ".[jax,tensorflow,dashboard]"</code></pre>
+    <div class="pill-row">
+      <span class="pill">Python ≥ 3.9</span>
+      <span class="pill">Dedalus installed on request via physai.install_dedalus()</span>
+      <span class="pill">JAX: pin via the jax extra, not an unpinned pip install</span>
+    </div>
   </section>
 
   <!-- Repository Structure -->
-  <section class="bg-white py-12 shadow-inner">
-    <div class="container mx-auto px-4 max-w-4xl">
-      <h2 class="text-3xl font-bold mb-6">Repository Structure</h2>
-      <pre class="bg-gray-100 p-4 rounded-lg overflow-x-auto text-sm">
-physai/
-├── __init__.py
-├── models.py
-├── trainer.py
-├── visualization.py
-├── pde_residual.py
-├── losses.py
-├── utils.py 
-examples/              
-├── example_schrodinger.py
-├── example_newton_cooling.py
-├── example_markov.py
-├── example_photoelectric.py
-├── example_planck.py
-README.md             
-requirements.txt      
-.gitignore             
-      </pre>
-    </div>
+  <section class="block" id="structure">
+    <h2 class="section-title">Repository Structure</h2>
+    <pre><code>src/physai/
+├── core/
+│   ├── pde_residual.py      # PDE_REGISTRY: 57 governing-equation residuals
+│   ├── auto_optimizer.py    # ProblemSpec -> AutoOptimizer -> RuntimeConfig
+│   └── losses.py            # residual / dirichlet / neumann / robin / periodic losses
+├── backends/                 # AbstractBackend + torch / jax / tensorflow / paddle
+├── models/
+│   ├── pinn.py               # Fourier-feature PINN, hard-constraint support
+│   ├── fno.py                 # Fourier Neural Operator
+│   └── spectral_element.py, spectralpinn.py   # USENO (Chebyshev spectral element)
+├── solvers/
+│   └── dedalus.py            # real Dedalus (box) + embedded-boundary FD (arbitrary geometry)
+├── geometry.py                # SDF primitives, CSG, mesh import, BoundaryConditionSet
+├── trainer.py                 # Trainer: training loop, callbacks, cross_validate, per-backend step logic
+├── visualization.py            # 1-D/2-D plots, loss curves, spectra, animations
+├── visualization_nd.py          # slicing / projection / isosurfaces / animation for N-D fields
+├── dashboard/live.py            # optional live terminal dashboard (Callback)
+├── chat_setup.py, dedalus_setup.py  # consent-gated optional-extra setup
+└── utils.py                    # sampling (LHS/Sobol), metrics, seeding, dtype helpers
+tests/
+└── test_pde_everything.py     # Tier A/B/C suite — see Testing below
+examples/
+README.md
+pyproject.toml
+requirements.txt</code></pre>
   </section>
 
-  <!-- Quick Start Example -->
-  <section class="container mx-auto my-12 px-4 max-w-4xl">
-    <h2 class="text-3xl font-bold mb-6">Quick Start Example</h2>
-    <pre class="bg-gray-200 p-4 rounded-lg overflow-x-auto text-sm">
-import torch
-from physai.models import PINN
-from physai.pde_residual import pde_residual
-from physai.losses import pinn_loss
-from physai.visualization import plot_1d_solution
-
-# Define a 1D logistic growth ODE
-def logistic(x, y):
-    r, K = 1.0, 1.0
-    return torch.autograd.grad(y, x, grad_outputs=torch.ones_like(y), create_graph=True)[0] - r*y*(1 - y/K)
-
-# Create a PINN model
-model = PINN(layers=[1, 20, 20, 1], activation='tanh')
-
-# Training points
-x_train = torch.linspace(0, 5, 100).reshape(-1,1)
-
-# Train the model
+  <!-- Quick Start -->
+  <section class="block" id="quick-start">
+    <h2 class="section-title">Quick Start</h2>
+    <p class="section-sub">
+      The entry point is <code>AutoOptimizer</code>, not a hand-built model and training loop: the governing equation
+      and domain are declared via a <code>ProblemSpec</code>, and <code>AutoOptimizer</code> emits a
+      <code>RuntimeConfig</code> that <code>Trainer</code> consumes directly.
+    </p>
+    <pre><code>import numpy as np
+from physai.backends import get_backend
+from physai.core.auto_optimizer import ProblemSpec, AutoOptimizer
+from physai.core.pde_residual import build_residual
+from physai.geometry import DomainSpec, box, BoundaryConditionSet, everywhere
 from physai.trainer import Trainer
-trainer = Trainer(model, collocation_points=x_train, pde_type='logistic')
-history = trainer.train(epochs=500, lr=1e-3)
 
-# Plot solution
-plot_1d_solution(model, x_train, title='Logistic Growth')
-    </pre>
+backend = get_backend("torch", device="cpu")  # swap backends with a single string change
+
+# 2-D Poisson equation, ∇²u = f, on the unit box, with a manufactured
+# solution u(x, y) = x² + y² imposed as Dirichlet data on the boundary.
+domain = DomainSpec(spatial_dims=2, bounds=[(-1, 1), (-1, 1)])
+analytic = lambda x: (x[:, 0] ** 2 + x[:, 1] ** 2).reshape(-1, 1)
+
+geom = box(domain.bounds)
+bcs = BoundaryConditionSet(geom)
+bcs.add("dirichlet", value=lambda x: analytic(x).astype(np.float32), region=everywhere)
+
+spec = ProblemSpec(pde_name="poisson", domain=domain, backend_name="torch")
+config = AutoOptimizer(backend, verbose=True).analyse(spec)   # sizes the network, picks lr/optimizer/etc.
+residual = build_residual("poisson", backend)</code></pre>
   </section>
 
-  <!-- Footer / Citation -->
-  <footer class="bg-blue-900 text-white py-8 mt-12">
-    <div class="container mx-auto text-center max-w-4xl px-4">
-      <h3 class="text-xl font-bold mb-2">Citation</h3>
-      <p>If you use <strong>PhysAI</strong> in research, please cite:</p>
-      <p class="mt-2 text-gray-200">
-        Singh, M. (2025). <em>PhysAI: Physics-Informed Neural Networks in PyTorch</em> (Version 2.5.7) [Computer software]. Zenodo. <br>
-        DOI: <a href="https://doi.org/10.5281/zenodo.17214725" class="underline hover:text-yellow-300">https://doi.org/10.5281/zenodo.17214725</a>
-      </p>
-      <p class="mt-4 text-gray-300 text-sm">Apache License | Ethical use required</p>
+  <!-- Architectures -->
+  <section class="block">
+    <h2 class="section-title">Model Architectures</h2>
+    <p class="section-sub">Three architectures share the same backend abstraction and residual definitions.</p>
+    <div class="card-grid">
+      <div class="card">
+        <h3>Fourier-Feature PINN</h3>
+        <p><code>physai.models.pinn</code> — a classic PINN with Fourier-feature input encoding and optional hard boundary-constraint support.</p>
+      </div>
+      <div class="card">
+        <h3>Fourier Neural Operator</h3>
+        <p><code>physai.models.fno</code> — following Li et al. (2020); learns a resolution-independent solution operator rather than a single field.</p>
+      </div>
+      <div class="card">
+        <h3>USENO (Spectral Element)</h3>
+        <p><code>physai.models.spectral_element</code> / <code>spectralpinn</code> — Chebyshev-basis Unified Spectral Element Neural Operator with C⁰/C¹ interface-continuity losses for stiff multiphysics problems.</p>
+      </div>
     </div>
-  </footer>
+  </section>
+
+  <!-- Testing -->
+  <section class="block" id="testing">
+    <h2 class="section-title">Testing</h2>
+    <p class="section-sub">Coverage and logs are checked in at <code>tests/tests_log.txt</code>. The suite runs across every backend whose framework is importable in the current environment — a missing framework is skipped, not a failure.</p>
+    <table class="notes-table">
+      <tr><th>Tier</th><th>What it checks</th></tr>
+      <tr><td><strong>Tier A</strong></td><td>Every one of the 57 registered equations trains for a few steps on a simple domain and is checked for finite, non-diverging loss — a mechanical pipeline test, not a convergence claim.</td></tr>
+      <tr><td><strong>Tier B</strong></td><td>A curated subset with hand-verified closed-form solutions, trained on a harder off-center domain with mixed Dirichlet/Neumann boundary conditions, checked against the analytic solution on held-out interior points.</td></tr>
+      <tr><td><strong>Tier C</strong></td><td>Cross-validation against real Dedalus spectral-solver output for a curated subset; skipped automatically if <code>dedalus</code> isn't installed.</td></tr>
+    </table>
+    <pre style="margin-top:1.5rem;"><code>pytest tests/test_pde_everything.py -v</code></pre>
+  </section>
+
+  <!-- Backend Notes -->
+  <section class="block">
+    <h2 class="section-title">Backend Notes</h2>
+    <p class="section-sub">Tensors, autodiff, and optimizers are abstracted behind <code>AbstractBackend</code>, implemented by <code>TorchBackend</code>, <code>JAXBackend</code>, <code>TensorFlowBackend</code>, and <code>PaddleBackend</code>.</p>
+    <table class="notes-table">
+      <tr><th>Backend</th><th>Note</th></tr>
+      <tr><td><strong>JAX</strong></td><td>Parameters live outside the model object (Flax-style), so <code>Trainer.init_jax(dummy_input)</code> must be called once before <code>trainer.train()</code>.</td></tr>
+      <tr><td><strong>JAX / Flax pin</strong></td><td>Install via the <code>jax</code> extra rather than an unpinned <code>jax</code>/<code>flax</code>. JAX ≥ 0.11 removes an internal API older Flax releases still call. The <code>pyproject.toml</code> pins keep the pair compatible.</td></tr>
+      <tr><td><strong>Precision</strong></td><td><code>AutoOptimizer</code> recommends float64 for equations flagged stiff in <code>_PDE_META</code>, float32 otherwise — overridable via <code>ProblemSpec.extra_params</code>.</td></tr>
+    </table>
+  </section>
+
+  <!-- Citation -->
+  <section class="block" id="citation">
+    <h2 class="section-title">Citation</h2>
+    <p class="section-sub">If you use PhysAI in research, academic publication, or official work, citation is required.</p>
+    <div class="citation-panel">
+      <div class="label">APA</div>
+      <p style="margin:0 0 1.25rem;color:var(--text-muted);">
+        Singh, M. (<a href="https://orcid.org/0009-0009-3913-6929">orcid.org/0009-0009-3913-6929</a>) (2026).
+        <em>PhysAI: A Multi-Backend Physics-Informed Neural Network Framework for Solving, Cross-Validating, and
+        Visualizing Ordinary and Partial Differential Equations</em> (Version 5.0.0) [Computer software]. Zenodo.
+        <a href="https://doi.org/10.5281/zenodo.17214724">https://doi.org/10.5281/zenodo.17214724</a>
+      </p>
+      <div class="label">BibTeX</div>
+      <pre style="margin:0;"><code>@software{singh_physai_2026,
+  author    = {Mankrit Singh},
+  title     = {PhysAI: A Multi-Backend Physics-Informed Neural Network
+               Framework for Solving, Cross-Validating, and Visualizing
+               Ordinary and Partial Differential Equations},
+  month     = sep,
+  year      = 2026,
+  publisher = {Zenodo},
+  version   = {5.0.0},
+  doi       = {10.5281/zenodo.17214724},
+  url       = {https://doi.org/10.5281/zenodo.17214724},
+  orcid     = {0009-0009-3913-6929}
+}</code></pre>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="container">
+    AGPL-3.0 License &middot; <a href="https://doi.org/10.5281/zenodo.17214724">Zenodo DOI</a> &middot; Ethical use required
+  </div>
+</footer>
 
 </body>
 </html>

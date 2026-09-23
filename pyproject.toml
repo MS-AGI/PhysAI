@@ -1,0 +1,129 @@
+[build-system]
+requires = ["setuptools>=77.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "physai"
+version = "5.0.0"
+description = "Multi-backend Physics-Informed Neural Network (PINN) framework for solving, animating, and cross-validating ODEs/PDEs, with 50+ built-in equations, SDF-based geometry/CSG, and automatic architecture selection"
+readme = "README.md"
+requires-python = ">=3.9"
+
+authors = [
+    { name = "Mankrit Singh", email = "mankrit.singh.physics@gmail.com" }
+]
+# PEP 621's [[project.authors]] table has no ORCID field of its own, so
+# the canonical machine-readable ORCID lives in CITATION.cff (which
+# does have one) and it's mirrored here as a URL for anyone browsing
+# just this file.
+
+# LICENSE is the unmodified GNU AGPLv3 text (confirmed against the actual
+# file contents), matching the README's AGPL-3.0 badge/notice. AGPL-3.0-only
+# is a standard SPDX identifier, so it's declared directly rather than via
+# a LicenseRef- expression. AGPLv3 *is* an OSI-approved license, so the
+# matching classifier is included below as well.
+license = "AGPL-3.0-only"
+license-files = ["LICENSE"]
+
+dependencies = [
+    "torch>=2.8.0",
+    "matplotlib>=3.7",
+    "numpy",
+]
+
+keywords = [
+    "Dedalus",
+    "Physics Solver",
+    "Spectral PINN",
+    "Multi-Backend Physics PINN library",
+    "PINN",
+    "Physics-Informed Neural Network",
+    "ODE",
+    "PDE",
+    "Deep Learning",
+    "Modular Library",
+    "Built-in PDE support",
+    "Efficient and Fast Training for Great PDE Solving and visualization",
+    "Built-in Partial Differential Equations using pre-made PINN",
+    "physai",
+    "Physics",
+    "AI",
+    "Neural Networks",
+    "PhysAI",
+]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+    "Environment :: GPU :: NVIDIA CUDA",
+]
+
+[project.optional-dependencies]
+jax        = ["jax>=0.4.0", "flax>=0.6.0", "optax>=0.2.0"]
+tensorflow = ["tensorflow>=2.15.0", "tensorflow-probability>=0.23.0"]
+paddle     = ["paddlepaddle>=2.6.0"]
+dashboard  = ["rich>=13.0"]
+chat       = ["rich>=13.0", "llama-cpp-python", "huggingface_hub>=0.20"]
+# Not documented in the README yet, but genuinely optional in the code:
+# geometry.py's geometry_from_file() uses trimesh when available and
+# falls back to a dependency-free parser otherwise. Adding this extra
+# doesn't change any existing behavior -- it just gives users of that
+# fallback path an explicit, discoverable way to opt into the better one.
+mesh       = ["trimesh>=4.0"]
+all        = ["physai[jax,tensorflow,paddle,dashboard,chat,mesh]"]
+# Not documented in the README either, but the repo already has a full
+# pytest suite (667 tests per tests/tests_log.txt) plus a .coverage file,
+# with no matching extras group for contributors to set up from a clean
+# checkout -- `pip install -e ".[dev]"` should be all that's needed.
+dev = [
+    "physai[all]",
+    "pytest>=7.0",
+    "pytest-cov",
+]
+
+[project.urls]
+homepage      = "https://github.com/MS-AGI/PhysAI"
+orcid         = "https://orcid.org/0009-0009-3913-6929"
+documentation = "https://github.com/MS-AGI/PhysAI"
+source        = "https://github.com/MS-AGI/PhysAI"
+issues        = "https://github.com/MS-AGI/PhysAI/issues"
+changelog     = "https://github.com/MS-AGI/PhysAI/releases"
+doi           = "https://doi.org/10.5281/zenodo.17214724"
+
+# -----------------------------------------------------------------------
+# setuptools: src-layout package discovery + non-.py data files
+# -----------------------------------------------------------------------
+# Neither of these existed before. Without the first, a `src/` layout
+# isn't auto-discovered by every setuptools version/config the same way,
+# which is exactly the kind of thing that works fine with `pip install -e .`
+# in a dev checkout (where the package is found via other means) but can
+# silently produce an empty or broken wheel on `python -m build` --
+# worth confirming with a real `python -m build && unzip -l dist/*.whl`
+# before publishing, not just trusting this config in the abstract.
+# Without the second, `src/physai/installer/installer.cmd` -- a non-.py
+# data file with no __init__.py, so it isn't a "package" setuptools'
+# auto-discovery would find on its own -- would be silently dropped from
+# the built wheel, breaking `physai.install_dedalus()` for anyone who
+# installed from PyPI rather than a source checkout.
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+physai = ["installer/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

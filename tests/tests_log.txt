@@ -1,0 +1,1037 @@
+
+============================= test session starts =============================
+platform win32 -- Python 3.13.3, pytest-8.4.2, pluggy-1.6.0
+rootdir: D:\desktop2\public-impact\python-packages\physai-library
+configfile: pyproject.toml
+plugins: anyio-4.9.0, langsmith-0.3.42, cov-7.1.0
+collecting 4 items                                                      collecting 69 items                                                     collecting 201 items                                                    collected 651 items                                                            
+
+tests\test-backend\jax_test.py ........................................s [  6%]
+...............s........                                                 [  9%]
+tests\test-backend\paddle_test.py ...................................... [ 15%]
+.........................                                                [ 19%]
+tests\test-backend\tf_test.py .......................................... [ 26%]
+...........................                                              [ 30%]
+tests\test-model\test_fno.py ................................            [ 35%]
+tests\test-model\test_pinn.py ...........................                [ 39%]
+tests\test-model\test_spectralpinn.py .................................. [ 44%]
+.....                                                                    [ 45%]
+tests\test-trainer-backend\jax_train_test.py .......                     [ 46%]
+tests\test-trainer-backend\paddle_train_test.py .....                    [ 47%]
+tests\test-trainer-backend\tf_train_test.py .....                        [ 47%]
+tests\test_geometry.py ................................................. [ 55%]
+.........                                                                [ 56%]
+tests\test_losses.py ................................................... [ 64%]
+..                                                                       [ 64%]
+tests\test_pde_residual.py ............................................. [ 71%]
+........................................................................ [ 82%]
+................................................                         [ 90%]
+tests\test_trainer.py .................................................. [ 98%]
+.............                                                            [100%]
+
+============================== warnings summary ===============================
+tests/test-backend/tf_test.py::TestAutodiff::test_jacobian
+tests/test-backend/tf_test.py::TestAutodiff::test_jacobian
+tests/test-backend/tf_test.py::TestAutodiff::test_jacobian
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: FunctionDef.__init__ missing 1 required positional argument: 'args'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py::TestAutodiff::test_jacobian
+tests/test-backend/tf_test.py::TestAutodiff::test_jacobian
+tests/test-backend/tf_test.py::TestAutodiff::test_jacobian
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: FunctionDef.__init__ missing 1 required positional argument: 'name'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py: 19 warnings
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: Constant.__init__ missing 1 required positional argument: 'value'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py::TestAutodiff::test_jacobian
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: withitem.__init__ missing 1 required positional argument: 'context_expr'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py: 14 warnings
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: Call.__init__ missing 1 required positional argument: 'func'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py: 13 warnings
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: Attribute.__init__ missing 1 required positional argument: 'attr'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py: 13 warnings
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: Attribute.__init__ missing 1 required positional argument: 'value'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py: 11 warnings
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: keyword.__init__ missing 1 required positional argument: 'value'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: alias.__init__ missing 1 required positional argument: 'name'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: Lambda.__init__ missing 1 required positional argument: 'body'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: Lambda.__init__ missing 1 required positional argument: 'args'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: BinOp.__init__ missing 1 required positional argument: 'left'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: BinOp.__init__ missing 1 required positional argument: 'right'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: BinOp.__init__ missing 1 required positional argument: 'op'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-trainer-backend/tf_train_test.py::TestTrainerTensorFlow::test_lbfgs_phase_tf_runs_to_completion_or_falls_back
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\tensorflow_probability\python\__init__.py:57: DeprecationWarning: distutils Version classes are deprecated. Use packaging.version instead.
+    if (distutils.version.LooseVersion(tf.__version__) <
+
+tests/test-trainer-backend/tf_train_test.py::TestTrainerTensorFlow::test_lbfgs_phase_tf_runs_to_completion_or_falls_back
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\tensorflow_probability\python\__init__.py:58: DeprecationWarning: distutils Version classes are deprecated. Use packaging.version instead.
+    distutils.version.LooseVersion(required_tensorflow_version)):
+
+tests/test-trainer-backend/tf_train_test.py::TestTrainerTensorFlow::test_lbfgs_phase_tf_runs_to_completion_or_falls_back
+  D:\desktop2\public-impact\python-packages\physai-library\src\physai\trainer.py:1337: UserWarning: tensorflow_probability is required for TensorFlow L-BFGS (install via 'pip install physai[tensorflow]'). Falling back to low-LR fine-tuning instead of true L-BFGS.
+    warnings.warn(
+
+tests/test_losses.py::TestRegularisationLosses::test_sobolev_loss_positive_for_nonconstant_function
+  D:\desktop2\public-impact\python-packages\physai-library\tests\test_losses.py:233: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+  Consider using tensor.detach() first. (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\pytorch\torch\csrc\autograd\generated\python_variable_methods.cpp:836.)
+    out = float(sobolev_loss(backend, model_fn, x, grad_fn, order=1, weight=1.0))
+
+tests/test_trainer.py::TestTrainerCompile::test_compile_true_trains_and_composite_becomes_compiled
+  D:\desktop2\public-impact\python-packages\physai-library\src\physai\trainer.py:1047: UserWarning: Trainer(compile=True): the first compiled call failed in this environment (GPUTooOldForTriton: Found Quadro P620 which is too old to be supported by the triton GPU compiler, which is used as the backend. Triton only supports devices of CUDA Capability >= 7.0, but your device is of CUDA capability 6.1
+  
+  Set TORCHDYNAMO_VERBOSE=1 for the internal stack trace (please do this especially if you're reporting a bug to PyTorch). For even more developer context, set TORCH_LOGS="+dynamo"
+  ). Falling back to eager execution for the rest of training instead of crashing. Set compile=False to skip this attempt entirely next time.
+    total, breakdown = self._get_composite_fn()()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.13.3-final-0 _______________
+
+Name                                        Stmts   Miss  Cover
+---------------------------------------------------------------
+src\physai\__init__.py                         14      0   100%
+src\physai\backends\__init__.py                31      8    74%
+src\physai\backends\base.py                   110      2    98%
+src\physai\backends\jax_backend.py            249     46    82%
+src\physai\backends\paddle_backend.py         250     11    96%
+src\physai\backends\tensorflow_backend.py     350     61    83%
+src\physai\backends\torch_backend.py          275     55    80%
+src\physai\chat_setup.py                       88     45    49%
+src\physai\core\__init__.py                     4      0   100%
+src\physai\core\auto_optimizer.py             301     71    76%
+src\physai\core\losses.py                     328     49    85%
+src\physai\core\pde_residual.py               964     52    95%
+src\physai\dashboard\__init__.py                2      0   100%
+src\physai\dashboard\live.py                  132     30    77%
+src\physai\geometry.py                        662    145    78%
+src\physai\models\__init__.py                   5      0   100%
+src\physai\models\fno.py                      269     41    85%
+src\physai\models\pinn.py                     104      2    98%
+src\physai\models\spectral_element.py         205      7    97%
+src\physai\models\spectralpinn.py              63      0   100%
+src\physai\solvers\__init__.py                  2      0   100%
+src\physai\solvers\dedalus.py                 240    149    38%
+src\physai\trainer.py                         693     91    87%
+src\physai\utils.py                           317    232    27%
+src\physai\visualization.py                   295    269     9%
+src\physai\visualization_nd.py                303    266    12%
+---------------------------------------------------------------
+TOTAL                                        6256   1632    74%
+=========== 649 passed, 2 skipped, 97 warnings in 70.23s (0:01:10) ============
+
+python .\tests\test_pde_everything.py
+Which tier would you like to run?
+  1: Tier 1 — every registered PDE (53), fast mechanical pipeline check
+  2: Tier 2 — curated subset trained against known closed-form solutions
+  3: Tier 3 — Dedalus cross-validation for heat & wave (needs `dedalus`)
+Enter 1, 2, or 3: 1
+=== Tier 1: pipeline sanity check for every registered PDE ===
+  PASS  test_tier_a_covers_the_entire_registry
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=9.5757e-02  |  lr=4.81e-06  |  pde=2.574e-03  zero_boundary=7.866e-03  ic=8.033e-03  |  0.1s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=1.1650e-02  |  elapsed=0.3s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[advection]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=7.5607e-01  |  lr=1.81e-06  |  pde=9.985e-02  zero_boundary=2.382e-02  ic=3.731e-02  |  0.1s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=1.3828e-01  |  elapsed=1.5s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[allen_cahn]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=1.2561e+01  |  lr=4.06e-06  |  pde=6.539e+00  zero_boundary=4.124e-01  |  0.4s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=1.1308e+00  |  elapsed=6.1s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[biharmonic]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=3.1858e+00  |  lr=4.46e-06  |  pde=1.266e+00  zero_boundary=1.524e-01  |  0.4s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=4.1946e-01  |  elapsed=5.8s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[biharmonic_steady]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=6.3509e+00  |  lr=4.69e-06  |  pde=3.078e-01  zero_boundary=5.106e-01  ic=1.968e-01  |  0.0s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=1.5771e+00  |  elapsed=0.5s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[black_scholes_2d]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=2.4695e+05  |  lr=1.81e-06  |  pde=2.469e+05  zero_boundary=1.737e+00  ic=6.750e-01  |  0.3s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=1.0280e+05  |  elapsed=3.5s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[boussinesq_convection]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=1.0371e+00  |  lr=1.65e-06  |  pde=4.252e-01  zero_boundary=2.141e-02  ic=3.048e-02  |  0.2s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=1.4209e-01  |  elapsed=2.7s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[boussinesq_wave]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=1.4872e+01  |  lr=4.71e-06  |  pde=1.224e+01  zero_boundary=2.316e-01  |  0.1s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=6.0728e+00  |  elapsed=0.7s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[brinkman_darcy]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=2.2055e+01  |  lr=1.81e-06  |  pde=2.067e-01  zero_boundary=1.131e+00  ic=5.655e-01  |  0.0s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=3.8919e+00  |  elapsed=0.5s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[burgers]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=1.1238e+01  |  lr=1.81e-06  |  pde=7.329e-02  zero_boundary=6.125e-01  ic=2.202e-01  |  0.1s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=3.9380e+00  |  elapsed=1.9s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[burgers_2d]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=3.0648e+01  |  lr=1.65e-06  |  pde=7.305e-01  zero_boundary=1.269e+00  ic=1.045e+00  |  0.1s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=1.5874e+01  |  elapsed=0.9s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[cahn_hilliard]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=6.4411e+00  |  lr=1.65e-06  |  pde=3.571e-01  zero_boundary=2.640e-01  ic=2.006e-01  |  0.1s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=1.1318e+00  |  elapsed=1.6s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[cahn_hilliard_2d]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=2.2547e+00  |  lr=1.81e-06  |  pde=1.111e-01  zero_boundary=9.526e-02  ic=8.697e-02  |  0.4s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=7.3248e-01  |  elapsed=5.4s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[complex_ginzburg_landau_2d]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=1.6511e+00  |  lr=4.71e-06  |  pde=3.166e-02  zero_boundary=1.427e-01  |  0.0s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=2.0927e-01  |  elapsed=0.3s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[darcy]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=3.0488e+00  |  lr=1.81e-06  |  pde=6.716e-01  zero_boundary=1.134e-01  ic=8.096e-02  |  0.4s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=1.3100e+00  |  elapsed=5.6s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[dendritic_solidification]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=4.1580e+00  |  lr=4.29e-06  |  pde=1.472e-01  zero_boundary=2.504e-01  ic=9.569e-02  |  0.1s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=3.8848e-01  |  elapsed=0.6s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[diffusion]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=8.2088e+01  |  lr=1.81e-06  |  pde=4.878e+00  zero_boundary=4.324e+00  ic=1.346e+00  |  0.1s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=4.7957e+01  |  elapsed=1.3s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[drift_diffusion_poisson]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=9.0650e-01  |  lr=4.83e-06  |  pde=8.655e-01  zero_boundary=3.824e-03  |  0.0s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=8.8527e-01  |  elapsed=0.1s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[eikonal]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=7.3859e-01  |  lr=1.89e-06  |  pde=1.578e-03  zero_boundary=3.669e-02  ic=2.605e-02  |  0.1s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=4.0763e-01  |  elapsed=1.7s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[euler]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=2.1876e+00  |  lr=4.71e-06  |  pde=2.634e-01  zero_boundary=1.695e-01  |  0.1s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=3.6656e-01  |  elapsed=0.6s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[euler_tricomi]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=6.6668e-01  |  lr=1.81e-06  |  pde=9.308e-02  zero_boundary=1.855e-02  ic=3.715e-02  |  0.2s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=1.9571e-01  |  elapsed=2.8s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[fisher_kpp]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=3.2666e+00  |  lr=1.81e-06  |  pde=1.260e-01  zero_boundary=1.191e-01  ic=1.683e-01  |  0.4s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=1.5008e+00  |  elapsed=5.9s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[fitzhugh_nagumo]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=1.9279e+00  |  lr=2.06e-06  |  pde=6.792e-02  zero_boundary=1.328e-01  ic=7.360e-02  |  0.2s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=5.5531e-01  |  elapsed=3.7s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[fokker_planck]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=1.5478e+00  |  lr=4.69e-06  |  pde=5.588e-02  zero_boundary=1.245e-01  ic=6.675e-02  |  0.0s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=1.0004e-01  |  elapsed=0.5s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[fokker_planck_2d]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=6.8083e+00  |  lr=1.81e-06  |  pde=2.600e+00  zero_boundary=2.237e-01  ic=9.740e-02  |  0.5s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=3.4615e+00  |  elapsed=5.4s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[gierer_meinhardt]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=2.2537e+00  |  lr=1.81e-06  |  pde=1.109e-01  zero_boundary=1.269e-01  ic=2.361e-02  |  0.4s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=7.4159e-01  |  elapsed=5.8s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[gray_scott]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=4.3022e+00  |  lr=4.29e-06  |  pde=1.450e-01  zero_boundary=2.491e-01  ic=1.200e-01  |  0.0s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=6.5886e-01  |  elapsed=0.6s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[heat]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=2.3299e+00  |  lr=4.71e-06  |  pde=5.343e-02  zero_boundary=2.006e-01  |  0.0s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=2.6019e-01  |  elapsed=0.3s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[helmholtz]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=9.0527e-01  |  lr=1.81e-06  |  pde=1.312e-01  zero_boundary=3.003e-02  ic=4.015e-02  |  0.3s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=2.6819e-01  |  elapsed=4.0s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[heston_volatility]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=2.5518e+01  |  lr=1.65e-06  |  pde=1.168e+01  zero_boundary=6.464e-01  ic=3.641e-01  |  0.2s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=4.8379e+00  |  elapsed=3.7s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[kadomtsev_petviashvili]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=8.5192e+00  |  lr=1.73e-06  |  pde=6.858e-01  zero_boundary=3.569e-01  ic=2.609e-01  |  0.1s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=9.7374e-01  |  elapsed=0.8s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[kdv]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=2.6431e+00  |  lr=4.69e-06  |  pde=2.036e-01  zero_boundary=2.008e-01  ic=1.408e-01  |  0.0s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=2.7050e-01  |  elapsed=0.6s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[klein_gordon]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=1.2278e+00  |  lr=1.81e-06  |  pde=1.541e-01  zero_boundary=4.356e-02  ic=5.187e-02  |  0.3s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=2.7317e-01  |  elapsed=4.1s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[klein_gordon_nonlinear_2d]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=2.8359e+00  |  lr=1.65e-06  |  pde=5.609e-01  zero_boundary=5.775e-02  ic=1.569e-01  |  0.2s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=5.4722e-01  |  elapsed=2.2s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[kuramoto_sivashinsky]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=4.6039e+00  |  lr=4.71e-06  |  pde=7.004e-02  zero_boundary=3.995e-01  |  0.0s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=1.5723e+00  |  elapsed=0.3s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[laplace]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=3.8295e+01  |  lr=1.81e-06  |  pde=1.949e+00  zero_boundary=1.746e+00  ic=1.213e+00  |  0.1s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=2.1991e+01  |  elapsed=1.7s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[navier_stokes]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=2.3110e+00  |  lr=1.81e-06  |  pde=4.848e-02  zero_boundary=1.282e-01  ic=3.656e-02  |  0.2s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=7.8138e-01  |  elapsed=2.9s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[nls]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=1.2414e+00  |  lr=1.81e-06  |  pde=1.864e-01  zero_boundary=5.949e-02  ic=1.760e-02  |  0.4s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=5.3270e-01  |  elapsed=6.5s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[nlse_2d]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=5.2032e+00  |  lr=1.81e-06  |  pde=2.534e-01  zero_boundary=2.901e-01  ic=6.057e-02  |  0.3s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=1.7330e+00  |  elapsed=3.0s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[perona_malik]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=8.3231e+01  |  lr=1.65e-06  |  pde=7.956e+01  zero_boundary=2.008e-01  ic=3.819e-02  |  8.4s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=1.5132e+01  |  elapsed=129.5s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[phase_field_crystal]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=7.4231e-01  |  lr=4.71e-06  |  pde=3.030e-02  zero_boundary=6.273e-02  |  0.0s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=2.3578e-02  |  elapsed=0.4s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[poisson]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=1.1944e+00  |  lr=1.81e-06  |  pde=1.857e-01  zero_boundary=4.797e-02  ic=3.464e-02  |  0.3s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=2.8930e-01  |  elapsed=5.6s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[porous_medium]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=4.4586e+00  |  lr=1.73e-06  |  pde=3.354e-02  zero_boundary=1.989e-01  ic=1.527e-01  |  0.3s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=1.6051e+00  |  elapsed=4.3s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[radhakrishnan_kundu_lakshmanan]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=2.2769e+00  |  lr=1.81e-06  |  pde=8.708e-02  zero_boundary=1.362e-01  ic=1.111e-02  |  0.5s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=9.3959e-01  |  elapsed=6.7s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[reaction_diffusion]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=8.2109e+00  |  lr=1.73e-06  |  pde=1.664e+00  zero_boundary=3.212e-01  ic=1.721e-01  |  0.1s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=2.7492e+00  |  elapsed=1.5s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[regularised_long_wave]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=2.2221e-01  |  lr=1.89e-06  |  pde=1.583e-03  zero_boundary=1.082e-02  ic=8.115e-03  |  0.1s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=8.5002e-02  |  elapsed=1.5s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[relativistic_fluid]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=2.8540e+00  |  lr=4.29e-06  |  pde=2.993e-01  zero_boundary=1.688e-01  ic=4.224e-02  |  0.1s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=3.7871e-01  |  elapsed=1.3s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[schrodinger]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=3.9125e-01  |  lr=1.89e-06  |  pde=2.131e-02  zero_boundary=1.889e-02  ic=1.213e-02  |  0.1s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=1.7588e-01  |  elapsed=0.8s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[shallow_water_2d]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=9.8996e-01  |  lr=1.81e-06  |  pde=7.389e-02  zero_boundary=4.210e-02  ic=3.438e-02  |  0.4s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=2.8665e-01  |  elapsed=8.4s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[sine_gordon_2d]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=7.7409e+00  |  lr=4.71e-06  |  pde=3.149e-01  zero_boundary=6.543e-01  |  0.1s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=3.5549e+00  |  elapsed=1.6s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[stokes]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=1.0949e+01  |  lr=1.65e-06  |  pde=1.626e+00  zero_boundary=4.491e-01  ic=2.184e-01  |  1.4s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=7.1480e-01  |  elapsed=10.5s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[swift_hohenberg]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=7.4935e+00  |  lr=4.16e-06  |  pde=2.413e-02  zero_boundary=4.205e-01  ic=2.203e-01  |  0.2s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=4.6273e-01  |  elapsed=1.8s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[viscous_wave]
+
+──────────────────────────────────────────────────────────────────────
+  PhysAI Trainer  |  backend=torch  |  device=cpu
+──────────────────────────────────────────────────────────────────────
+  step       0  |  loss=6.2167e-01  |  lr=4.69e-06  |  pde=1.830e-02  zero_boundary=5.178e-02  ic=1.048e-02  |  0.1s
+
+──────────────────────────────────────────────────────────────────────
+  Training complete  |  best_loss=8.1594e-02  |  elapsed=0.5s
+──────────────────────────────────────────────────────────────────────
+
+  PASS  test_tier_a_pipeline_runs_for_every_pde[wave]
+
+54/54 checks passed.
+
+PS D:\desktop2\public-impact\python-packages\physai-library> pytest .\tests --ignore=.\tests\test_pde_everything.py
+================================================= test session starts =================================================
+platform win32 -- Python 3.13.3, pytest-8.4.2, pluggy-1.6.0
+rootdir: D:\desktop2\public-impact\python-packages\physai-library
+configfile: pyproject.toml
+plugins: anyio-4.9.0, langsmith-0.3.42, cov-7.1.0, instafail-0.5.0
+collected 669 items                                                                                                    
+
+tests\test-backend\jax_test.py ........................................s...............s........                 [  9%]
+tests\test-backend\paddle_test.py ...............................................................                [ 19%]
+tests\test-backend\tf_test.py .....................................................................              [ 29%]
+tests\test-model\test_fno.py ................................                                                    [ 34%]
+tests\test-model\test_pinn.py ...........................                                                        [ 38%]
+tests\test-model\test_spectralpinn.py .......................................                                    [ 44%]
+tests\test-trainer-backend\jax_train_test.py .......                                                             [ 45%]
+tests\test-trainer-backend\paddle_train_test.py .....                                                            [ 45%]
+tests\test-trainer-backend\tf_train_test.py .....                                                                [ 46%]
+tests\test_geometry.py ..........................................................                                [ 55%]
+tests\test_losses.py .....................................................                                       [ 63%]
+tests\test_pde_residual.py ..................................................................................... [ 75%]
+..................................................................................................               [ 90%]
+tests\test_trainer.py ...............................................................                            [100%]
+
+================================================== warnings summary ===================================================
+tests/test-backend/tf_test.py::TestAutodiff::test_jacobian
+tests/test-backend/tf_test.py::TestAutodiff::test_jacobian
+tests/test-backend/tf_test.py::TestAutodiff::test_jacobian
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: FunctionDef.__init__ missing 1 required positional argument: 'args'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py::TestAutodiff::test_jacobian
+tests/test-backend/tf_test.py::TestAutodiff::test_jacobian
+tests/test-backend/tf_test.py::TestAutodiff::test_jacobian
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: FunctionDef.__init__ missing 1 required positional argument: 'name'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py: 19 warnings
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: Constant.__init__ missing 1 required positional argument: 'value'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py::TestAutodiff::test_jacobian
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: withitem.__init__ missing 1 required positional argument: 'context_expr'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py: 14 warnings
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: Call.__init__ missing 1 required positional argument: 'func'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py: 13 warnings
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: Attribute.__init__ missing 1 required positional argument: 'value'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py: 13 warnings
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: Attribute.__init__ missing 1 required positional argument: 'attr'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py: 11 warnings
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: keyword.__init__ missing 1 required positional argument: 'value'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: alias.__init__ missing 1 required positional argument: 'name'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: Lambda.__init__ missing 1 required positional argument: 'body'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: Lambda.__init__ missing 1 required positional argument: 'args'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: BinOp.__init__ missing 1 required positional argument: 'left'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: BinOp.__init__ missing 1 required positional argument: 'op'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: BinOp.__init__ missing 1 required positional argument: 'right'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-trainer-backend/tf_train_test.py::TestTrainerTensorFlow::test_lbfgs_phase_tf_runs_to_completion_or_falls_back
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\tensorflow_probability\python\__init__.py:57:DeprecationWarning: distutils Version classes are deprecated. Use packaging.version instead.
+    if (distutils.version.LooseVersion(tf.__version__) <
+
+tests/test-trainer-backend/tf_train_test.py::TestTrainerTensorFlow::test_lbfgs_phase_tf_runs_to_completion_or_falls_back
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\tensorflow_probability\python\__init__.py:58:DeprecationWarning: distutils Version classes are deprecated. Use packaging.version instead.
+    distutils.version.LooseVersion(required_tensorflow_version)):
+
+tests/test-trainer-backend/tf_train_test.py::TestTrainerTensorFlow::test_lbfgs_phase_tf_runs_to_completion_or_falls_back
+  D:\desktop2\public-impact\python-packages\physai-library\src\physai\trainer.py:1368: UserWarning: tensorflow_probability is required for TensorFlow L-BFGS (install via 'pip install physai[tensorflow]'). Falling back to low-LR fine-tuninginstead of true L-BFGS.
+    warnings.warn(
+
+tests/test_losses.py::TestRegularisationLosses::test_sobolev_loss_positive_for_nonconstant_function
+  D:\desktop2\public-impact\python-packages\physai-library\tests\test_losses.py:233: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+  Consider using tensor.detach() first. (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\pytorch\torch\csrc\autograd\generated\python_variable_methods.cpp:836.)
+    out = float(sobolev_loss(backend, model_fn, x, grad_fn, order=1, weight=1.0))
+
+tests/test_trainer.py::TestTrainerCompile::test_compile_true_trains_and_composite_becomes_compiled
+  D:\desktop2\public-impact\python-packages\physai-library\src\physai\trainer.py:1078: UserWarning: Trainer(compile=True): the first compiled call failed in this environment (InductorError: RuntimeError: Compiler: cl is not found.
+  
+  Set TORCHDYNAMO_VERBOSE=1 for the internal stack trace (please do this especially if you're reporting a bug to PyTorch). For even more developer context, set TORCH_LOGS="+dynamo"
+  ). Falling back to eager execution for the rest of training instead of crashing. Set compile=False to skip this attempt entirely next time.
+    total, breakdown = self._get_composite_fn()()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=============================== 667 passed, 2 skipped, 97 warnings in 145.49s (0:02:25) ===============================
+
+==================================================================== test session starts =====================================================================
+platform win32 -- Python 3.13.3, pytest-8.4.2, pluggy-1.6.0
+rootdir: D:\desktop2\public-impact\python-packages\physai-library
+configfile: pyproject.toml
+plugins: anyio-4.9.0, langsmith-0.3.42, cov-7.1.0, instafail-0.5.0
+collected 775 items                                                                                                                                           
+
+tests\test-backend\jax_test.py ........................................s...............s........                                                        [  8%]
+tests\test-backend\paddle_test.py ...............................................................                                                       [ 16%]
+tests\test-backend\tf_test.py .....................................................................                                                     [ 25%]
+tests\test-model\test_fno.py ................................                                                                                           [ 29%]
+tests\test-model\test_pinn.py ...........................                                                                                               [ 33%]
+tests\test-model\test_spectralpinn.py .......................................                                                                           [ 38%]
+tests\test-trainer-backend\jax_train_test.py .......                                                                                                    [ 38%]
+tests\test-trainer-backend\paddle_train_test.py .....                                                                                                   [ 39%]
+tests\test-trainer-backend\tf_train_test.py .....                                                                                                       [ 40%]
+tests\test_geometry.py ..........................................................                                                                       [ 47%]
+tests\test_losses.py .....................................................                                                                              [ 54%]
+tests\test_pde_residual.py ............................................................................................................................ [ 70%]
+...........................................................                                                                                             [ 78%]
+tests\test_trainer.py ...............................................................                                                                   [ 86%]
+tests\test_utils_and_viz.py .............................................................................................ss.......s...                  [100%]
+
+====================================================================== warnings summary ======================================================================
+tests/test-backend/tf_test.py::TestAutodiff::test_jacobian
+tests/test-backend/tf_test.py::TestAutodiff::test_jacobian
+tests/test-backend/tf_test.py::TestAutodiff::test_jacobian
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: FunctionDef.__init__ missing 1 required positional argument: 'args'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py::TestAutodiff::test_jacobian
+tests/test-backend/tf_test.py::TestAutodiff::test_jacobian
+tests/test-backend/tf_test.py::TestAutodiff::test_jacobian
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: FunctionDef.__init__ missing 1 required positional argument: 'name'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py: 19 warnings
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: Constant.__init__ missing 1 required positionalargument: 'value'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py::TestAutodiff::test_jacobian
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: withitem.__init__ missing 1 required positionalargument: 'context_expr'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py: 14 warnings
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: Call.__init__ missing 1 required positional argument: 'func'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py: 13 warnings
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: Attribute.__init__ missing 1 required positional argument: 'value'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py: 13 warnings
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: Attribute.__init__ missing 1 required positional argument: 'attr'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py: 11 warnings
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: keyword.__init__ missing 1 required positional argument: 'value'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: alias.__init__ missing 1 required positional argument: 'name'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: Lambda.__init__ missing 1 required positional argument: 'args'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: Lambda.__init__ missing 1 required positional argument: 'body'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: BinOp.__init__ missing 1 required positional argument: 'right'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: BinOp.__init__ missing 1 required positional argument: 'op'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+tests/test-backend/tf_test.py::TestJitVmap::test_jit_wraps_in_tf_function
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\gast\astn.py:20: DeprecationWarning: BinOp.__init__ missing 1 required positional argument: 'left'. This will become an error in Python 3.15.
+    new_node = getattr(to, cls)()
+
+tests/test-trainer-backend/tf_train_test.py::TestTrainerTensorFlow::test_lbfgs_phase_tf_runs_to_completion_or_falls_back
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\tensorflow_probability\python\__init__.py:57: DeprecationWarning: distutils Version classes are deprecated. Use packaging.version instead.
+    if (distutils.version.LooseVersion(tf.__version__) <
+
+tests/test-trainer-backend/tf_train_test.py::TestTrainerTensorFlow::test_lbfgs_phase_tf_runs_to_completion_or_falls_back
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\tensorflow_probability\python\__init__.py:58: DeprecationWarning: distutils Version classes are deprecated. Use packaging.version instead.
+    distutils.version.LooseVersion(required_tensorflow_version)):
+
+tests/test-trainer-backend/tf_train_test.py::TestTrainerTensorFlow::test_lbfgs_phase_tf_runs_to_completion_or_falls_back
+  D:\desktop2\public-impact\python-packages\physai-library\src\physai\trainer.py:1368: UserWarning: tensorflow_probability is required for TensorFlow L-BFGS (install via 'pip install physai[tensorflow]'). Falling back to low-LR fine-tuning instead of true L-BFGS.
+    warnings.warn(
+
+tests/test_losses.py::TestRegularisationLosses::test_sobolev_loss_positive_for_nonconstant_function
+  D:\desktop2\public-impact\python-packages\physai-library\tests\test_losses.py:233: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+  Consider using tensor.detach() first. (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\pytorch\torch\csrc\autograd\generated\python_variable_methods.cpp:836.)
+    out = float(sobolev_loss(backend, model_fn, x, grad_fn, order=1, weight=1.0))
+
+tests/test_trainer.py::TestTrainerCompile::test_compile_true_trains_and_composite_becomes_compiled
+  D:\desktop2\public-impact\python-packages\physai-library\src\physai\trainer.py:1078: UserWarning: Trainer(compile=True): the first compiled call failed in this environment (InductorError: RuntimeError: Compiler: cl is not found.
+  
+  Set TORCHDYNAMO_VERBOSE=1 for the internal stack trace (please do this especially if you're reporting a bug to PyTorch). For even more developer context, set TORCH_LOGS="+dynamo"
+  ). Falling back to eager execution for the rest of training instead of crashing. Set compile=False to skip this attempt entirely next time.
+    total, breakdown = self._get_composite_fn()()
+
+tests/test_utils_and_viz.py::test_plot_isosurface_3d_matplotlib_fallback
+  D:\desktop2\public-impact\python-packages\physai-library\src\physai\visualization_nd.py:537: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+    colors = plt.cm.get_cmap(colorscale if colorscale in plt.colormaps() else "RdBu_r")(norm(small))
+
+tests/test_utils_and_viz.py::test_animate_nd_field_2d_slice_mode
+tests/test_utils_and_viz.py::test_animate_nd_field_project_mode
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\matplotlib\animation.py:908: UserWarning: Animation was deleted without rendering anything. This is most likely not intended. To prevent deletion, assign the Animation to a variable, e.g. `anim`, that exists until you output the Animation using `plt.show()` or `anim.save()`.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================================================================= tests coverage =======================================================================
+______________________________________________________ coverage: platform win32, python 3.13.3-final-0 _______________________________________________________
+
+Name                                        Stmts   Miss  Cover
+---------------------------------------------------------------
+src\physai\__init__.py                         18      0   100%
+src\physai\backends\__init__.py                31      8    74%
+src\physai\backends\base.py                   110      2    98%
+src\physai\backends\jax_backend.py            249     46    82%
+src\physai\backends\paddle_backend.py         255     12    95%
+src\physai\backends\tensorflow_backend.py     350     61    83%
+src\physai\backends\torch_backend.py          275     57    79%
+src\physai\chat_setup.py                       88     48    45%
+src\physai\core\__init__.py                     4      0   100%
+src\physai\core\auto_optimizer.py             301     71    76%
+src\physai\core\losses.py                     328     49    85%
+src\physai\core\pde_residual.py              1219     50    96%
+src\physai\dashboard\__init__.py                2      0   100%
+src\physai\dashboard\live.py                  132     30    77%
+src\physai\dedalus_setup.py                   117     77    34%
+src\physai\geometry.py                        662    145    78%
+src\physai\models\__init__.py                   5      0   100%
+src\physai\models\fno.py                      269     41    85%
+src\physai\models\pinn.py                     104      2    98%
+src\physai\models\spectral_element.py         205      7    97%
+src\physai\models\spectralpinn.py              63      0   100%
+src\physai\solvers\__init__.py                  2      0   100%
+src\physai\solvers\dedalus.py                 240    149    38%
+src\physai\trainer.py                         706     96    86%
+src\physai\utils.py                           317     15    95%
+src\physai\visualization.py                   295      9    97%
+src\physai\visualization_nd.py                303     47    84%
+---------------------------------------------------------------
+TOTAL                                        6650   1022    85%
+================================================== 770 passed, 5 skipped, 100 warnings in 143.49s (0:02:23) ==================================================

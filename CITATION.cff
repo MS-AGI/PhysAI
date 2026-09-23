@@ -1,12 +1,14 @@
-cff-version: 1.0.0
-title: "PhysAI: A Comprehensive Framework for Physics-Informed Neural Networks with Built-In PDE Modules and Time-Dependent System Support"
+cff-version: 1.2.0
+title: "PhysAI: A Multi-Backend Physics-Informed Neural Network Framework for Solving, Cross-Validating, and Visualizing Ordinary and Partial Differential Equations"
 authors:
   - family-names: "Singh"
     given-names: "Mankrit"
-    email: "whataninfinity@gmail.com"
-    affiliation: "Researcher and Developer"
+    email: "mankrit.singh.physics@gmail.com"
+    orcid: "https://orcid.org/0009-0009-3913-6929"
+    affiliation: "Independent Researcher"
 repository-code: "https://github.com/MS-AGI/PhysAI"
+license: AGPL-3.0-only
 doi: "10.5281/zenodo.17214724"
-version: "2.5.8"
-date-released: "2025-09-27"
+version: "5.0.0"
+date-released: "2026-09-23"
 message: "If you use this software, please cite it as below."
