@@ -19,6 +19,10 @@ Both ``rich`` and ``llama_cpp`` are imported lazily, inside
 package unless you actually instantiate this callback with the chat
 feature enabled.
 
+At training end, the callback writes ``physai_training_report.pdf`` by
+default, with total and per-term loss curves and a target-loss convergence
+assessment. Set ``report_file=None`` to disable the PDF export.
+
 Usage
 -----
 The built-in way — ``Trainer`` will construct and attach this callback
@@ -58,6 +62,7 @@ import re
 import threading
 import time
 from collections import deque
+from pathlib import Path
 from typing import Any, Deque, Dict, Optional
 
 from physai.trainer import Callback
@@ -90,6 +95,8 @@ class RichDashboardCallback(Callback):
     system_prompt : optional system prompt for the embedded chat model.
     log_file      : if given, session logs + chat history are written
                     here at the end of training.
+    report_file   : if given, a PDF summary with loss plots and a
+                    target-convergence assessment is written at the end.
     """
 
     def __init__(
@@ -103,6 +110,7 @@ class RichDashboardCallback(Callback):
         n_ctx: int = 2048,
         system_prompt: str = _DEFAULT_SYSTEM_PROMPT,
         log_file: Optional[str] = "physai_session.log",
+        report_file: Optional[str] = "physai_training_report.pdf",
     ) -> None:
         if enable_chat and not model_path:
             raise ValueError(
@@ -118,6 +126,7 @@ class RichDashboardCallback(Callback):
         self.n_ctx = n_ctx
         self.system_prompt = system_prompt
         self.log_file = log_file
+        self.report_file = report_file
 
         self.logs: Deque[str] = deque(maxlen=log_maxlen)
         self.chat_history: Deque[str] = deque(maxlen=50)
@@ -166,7 +175,7 @@ class RichDashboardCallback(Callback):
         if self.enable_chat:
             self._load_llm()
 
-        self.status = f"Training on backend={trainer.backend.name} …"
+        self.status = f"Training on backend={trainer.backend.name}..."
         if self.enable_chat:
             self.status += " Type a question below; enter 'quit' to close."
         self._layout = Layout()
@@ -233,6 +242,8 @@ class RichDashboardCallback(Callback):
 
         if self.log_file:
             self._export_logs()
+        if self.report_file:
+            self._export_report(trainer)
 
     # ------------------------------------------------------------------
     # Internals
@@ -260,7 +271,10 @@ class RichDashboardCallback(Callback):
             chat_text = "\n".join(self.chat_history)
         self._layout["logs"].update(Panel(log_text, title="Training Logs"))
         self._layout["chat"].update(
-            Panel(chat_text or "(chat disabled)", title="Agent Chat")
+            Panel(
+                chat_text or ("(waiting for your first message)" if self.enable_chat else "(chat disabled)"),
+                title="Agent Chat",
+            )
         )
         self._layout["status_area"].update(Panel(self.status, title="Status"))
         return self._layout
@@ -366,3 +380,181 @@ class RichDashboardCallback(Callback):
                 f.write("\n--- Conversation History ---\n")
                 for chat in self.chat_history:
                     f.write(self._strip_markup(chat) + "\n")
+
+    def _export_report(self, trainer: Any) -> None:
+        """Write a polished PDF summary and loss-history plot."""
+        try:
+            import matplotlib.pyplot as plt
+            import numpy as np
+            from matplotlib.backends.backend_pdf import PdfPages
+            from matplotlib.patches import FancyBboxPatch
+        except ImportError as exc:  # pragma: no cover - matplotlib is a core dependency
+            raise ImportError(
+                "The dashboard PDF report requires matplotlib. "
+                "Install it with: pip install matplotlib"
+            ) from exc
+
+        history = trainer.history
+        steps = np.asarray(getattr(history, "steps", []), dtype=float)
+        total = np.asarray(getattr(history, "total_loss", []), dtype=float)
+        terms = getattr(history, "terms", {}) or {}
+        val_loss = np.asarray(getattr(history, "val_loss", []), dtype=float)
+        lr = np.asarray(getattr(history, "lr", []), dtype=float)
+        wall_time = getattr(history, "wall_time", []) or []
+        target = getattr(getattr(getattr(trainer, "config", None), "problem", None), "target_loss", None)
+
+        finite_total = total[np.isfinite(total)]
+        initial_loss = float(total[0]) if total.size else float("nan")
+        final_loss = float(total[-1]) if total.size else float("nan")
+        best_loss = float(np.min(finite_total)) if finite_total.size else float("nan")
+        finite_indices = np.flatnonzero(np.isfinite(total))
+        best_index = (
+            int(finite_indices[np.argmin(total[finite_indices])])
+            if finite_indices.size else None
+        )
+        best_step = int(steps[best_index]) if best_index is not None and best_index < steps.size else None
+        runtime = float(wall_time[-1]) if wall_time else 0.0
+        reached_target = (
+            target is not None
+            and np.isfinite(final_loss)
+            and final_loss <= float(target)
+        )
+        if target is None:
+            convergence = "No target configured"
+        elif reached_target:
+            convergence = "Target reached"
+        else:
+            convergence = "Target not reached"
+
+        config = getattr(trainer, "config", None)
+        problem = getattr(config, "problem", None)
+        model_config = getattr(config, "model", None)
+        pde_name = getattr(problem, "pde_name", "unspecified")
+        backend_name = getattr(getattr(trainer, "backend", None), "name", "unspecified")
+        model_name = getattr(model_config, "arch", "unspecified")
+        timestamp = time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())
+
+        def _fmt(value: float) -> str:
+            return f"{value:.4e}" if np.isfinite(value) else "n/a"
+
+        fig = plt.figure(figsize=(11.7, 8.3), facecolor="#f3f6fb")
+        fig.text(0.07, 0.945, "PhysAI", fontsize=12, color="#168c91", weight="bold")
+        fig.text(0.07, 0.895, "Training report", fontsize=25, color="#14243a", weight="bold")
+        fig.text(
+            0.07, 0.855,
+            f"{pde_name}   ·   {backend_name}   ·   {model_name}   ·   {timestamp}",
+            fontsize=9, color="#65758b",
+        )
+
+        card_values = [
+            ("TRAINING STEPS", str(len(total))),
+            ("INITIAL → BEST LOSS", f"{_fmt(initial_loss)}  →  {_fmt(best_loss)}"),
+            ("FINAL LOSS / RUNTIME", f"{_fmt(final_loss)}  /  {runtime:.1f}s"),
+            ("CONVERGENCE", convergence),
+        ]
+        card_lefts = [0.07, 0.30, 0.53, 0.76]
+        card_width = 0.21
+        for left, (label, value) in zip(card_lefts, card_values):
+            card = fig.add_axes([left, 0.735, card_width, 0.085])
+            card.set_facecolor("white")
+            card.set_xticks([])
+            card.set_yticks([])
+            for spine in card.spines.values():
+                spine.set_visible(False)
+            card.add_patch(FancyBboxPatch(
+                (0, 0), 1, 1,
+                boxstyle="round,pad=0.018,rounding_size=0.06",
+                transform=card.transAxes,
+                facecolor="white", edgecolor="#dce4ee", linewidth=0.8,
+                clip_on=False,
+            ))
+            card.text(0.08, 0.68, label, transform=card.transAxes,
+                      fontsize=7, color="#718096", weight="bold", zorder=2)
+            card.text(0.08, 0.25, value, transform=card.transAxes,
+                      fontsize=10, color="#14243a", weight="bold", zorder=2)
+            card.set_xlim(0, 1)
+            card.set_ylim(0, 1)
+
+        ax = fig.add_axes([0.09, 0.16, 0.72, 0.51], facecolor="white")
+        ax.set_title("Loss history", loc="left", fontsize=14, color="#14243a", weight="bold", pad=14)
+        ax.set_xlabel("Training step", color="#65758b")
+        ax.set_ylabel("Loss", color="#65758b")
+        ax.grid(True, which="both", color="#dfe6ef", linewidth=0.7, alpha=0.8)
+        ax.spines[["top", "right"]].set_visible(False)
+        ax.spines[["left", "bottom"]].set_color("#cbd5e1")
+        plotted_values = []
+
+        if steps.size and total.size:
+            x_total = steps[:total.size]
+            valid = np.isfinite(x_total) & np.isfinite(total[:x_total.size])
+            y_total = total[:x_total.size][valid]
+            x_total = x_total[valid]
+            if y_total.size:
+                ax.plot(x_total, y_total, color="#168c91", linewidth=2.7,
+                        label="Total loss", zorder=5)
+                ax.fill_between(x_total, y_total, color="#168c91", alpha=0.08)
+                plotted_values.extend(y_total.tolist())
+
+        palette = plt.get_cmap("tab20")
+        for index, (name, values) in enumerate(terms.items()):
+            values = np.asarray(values, dtype=float)
+            count = min(steps.size, values.size)
+            if count == 0:
+                continue
+            x_term, y_term = steps[:count], values[:count]
+            valid = np.isfinite(x_term) & np.isfinite(y_term)
+            if not np.any(valid):
+                continue
+            ax.plot(x_term[valid], y_term[valid], color=palette(index % 20),
+                    linewidth=1.35, alpha=0.9, label=str(name))
+            plotted_values.extend(y_term[valid].tolist())
+
+        if val_loss.size and steps.size:
+            log_every = max(int(getattr(trainer, "log_every", 1)), 1)
+            val_steps = np.asarray([int(step) for step in steps if int(step) % log_every == 0])
+            val_steps = val_steps[:val_loss.size]
+            count = min(val_steps.size, val_loss.size)
+            valid = np.isfinite(val_loss[:count])
+            if count and np.any(valid):
+                ax.plot(val_steps[:count][valid], val_loss[:count][valid],
+                        color="#e27a45", linewidth=1.8, linestyle="--",
+                        marker="o", markersize=3.5, label="Validation loss")
+                plotted_values.extend(val_loss[:count][valid].tolist())
+
+        if target is not None and np.isfinite(float(target)):
+            ax.axhline(float(target), color="#9a6bb5", linewidth=1.2,
+                       linestyle=(0, (4, 3)), label=f"Target ({float(target):.2e})")
+            plotted_values.append(float(target))
+
+        if plotted_values:
+            if min(plotted_values) > 0:
+                ax.set_yscale("log")
+            elif min(plotted_values) < 0 < max(plotted_values):
+                ax.set_yscale("symlog", linthresh=1e-8)
+            ax.legend(loc="upper left", bbox_to_anchor=(1.015, 1.0),
+                      frameon=False, fontsize=8, labelcolor="#34445a")
+        else:
+            ax.text(0.5, 0.5, "No loss history was recorded for this run.",
+                    ha="center", va="center", transform=ax.transAxes,
+                    color="#65758b", fontsize=12)
+
+        ax.tick_params(colors="#65758b", labelsize=8)
+        target_text = f"Configured target loss: {float(target):.4e}" if target is not None else "No target loss was configured."
+        convergence_detail = (
+            f"Best loss {_fmt(best_loss)} at step {best_step}; {target_text}."
+            if best_step is not None else target_text
+        )
+        fig.text(0.09, 0.105, convergence_detail, fontsize=9, color="#4f6075")
+        fig.text(0.07, 0.055, "PhysAI · generated at the end of the training run",
+                 fontsize=8, color="#8a98aa")
+        fig.text(0.93, 0.055, "1", fontsize=8, color="#8a98aa", ha="right")
+
+        report_path = Path(self.report_file).expanduser()
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        with PdfPages(report_path, metadata={
+            "Title": "PhysAI Training Report",
+            "Author": "PhysAI",
+            "Subject": "Training losses and convergence summary",
+        }) as pdf:
+            pdf.savefig(fig, facecolor=fig.get_facecolor())
+        plt.close(fig)

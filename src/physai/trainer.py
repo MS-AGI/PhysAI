@@ -415,6 +415,7 @@ class Trainer:
         live_dashboard: bool = False,
         dashboard_chat: bool = False,
         dashboard_model_path: Optional[str] = None,
+        dashboard_report_file: Optional[str] = "physai_training_report.pdf",
         diff_mode: str = "reverse",
         compile: bool = False,
         compile_kwargs: Optional[Dict[str, Any]] = None,
@@ -428,6 +429,8 @@ class Trainer:
             local llama.cpp chat panel next to the training logs. Requires
             ``pip install physai[chat]`` and ``dashboard_model_path``.
         dashboard_model_path : path to a local GGUF model for the chat panel.
+        dashboard_report_file : PDF training summary path written when the
+            dashboard run ends; set to None to disable report generation.
         diff_mode : differentiation strategy ("reverse" | "forward" |
             "taylor") used by the Trainer's *own* derivative helper
             (``_spatial_grad``, used for Neumann/Robin boundary condition
@@ -574,6 +577,7 @@ class Trainer:
                 total_steps=config.problem.max_epochs,
                 enable_chat=dashboard_chat,
                 model_path=dashboard_model_path,
+                report_file=dashboard_report_file,
             )
             self.callbacks = list(callbacks) + [dashboard_cb] if callbacks else [dashboard_cb]
         else:
