@@ -9,11 +9,12 @@ script. Attach it to any ``Trainer`` on any backend and you get:
     driven directly by ``on_epoch_end`` — no polling, no coupling to a
     specific backend.
   * An optional side chat panel backed by a local GGUF model via
-    ``llama_cpp``, so you can ask questions about the run *while it
-    trains*, without blocking the training thread.
+    ``llama_cpp``. In chat mode, enter prompts at the terminal while
+    training runs; model responses are generated on a worker thread so
+    they do not block training.
 
 Both ``rich`` and ``llama_cpp`` are imported lazily, inside
-``on_train_begin`` / ``__init__`` respectively, so importing
+``on_train_begin``, so importing
 ``physai.dashboard`` (or ``physai`` as a whole) never requires either
 package unless you actually instantiate this callback with the chat
 feature enabled.
@@ -36,6 +37,7 @@ With the embedded local chat panel::
         ..., live_dashboard=True, dashboard_chat=True,
         dashboard_model_path="Llama-3-8B-Instruct.Q4_K_M.gguf",
     )
+    trainer.train()  # chat runs alongside training; returns when training ends
 
 Manual attachment is still supported for custom callback stacks
 (e.g. combining it with ``EarlyStoppingCallback``)::
@@ -127,6 +129,7 @@ class RichDashboardCallback(Callback):
 
         self._llm: Any = None
         self._live: Any = None
+        self._console: Any = None
         self._threads: list = []
 
     # ------------------------------------------------------------------
@@ -134,8 +137,20 @@ class RichDashboardCallback(Callback):
     # ------------------------------------------------------------------
 
     def on_train_begin(self, trainer: "Any") -> None:
+        # A callback can be attached to more than one training run. Start
+        # each run with fresh worker state and a fresh view of its logs.
+        self._stop_event.clear()
+        self._threads = []
+        self.logs.clear()
+        self.chat_history.clear()
+        while True:
+            try:
+                self._cmd_queue.get_nowait()
+            except queue.Empty:
+                break
+
         try:
-            from rich.console import Console  # noqa: F401
+            from rich.console import Console
             from rich.layout import Layout
             from rich.live import Live
             from rich.panel import Panel
@@ -146,11 +161,14 @@ class RichDashboardCallback(Callback):
             ) from exc
 
         self._rich = {"Layout": Layout, "Live": Live, "Panel": Panel}
+        self._console = Console()
 
         if self.enable_chat:
             self._load_llm()
 
         self.status = f"Training on backend={trainer.backend.name} …"
+        if self.enable_chat:
+            self.status += " Type a question below; enter 'quit' to close."
         self._layout = Layout()
         self._layout.split_column(
             Layout(name="upper_body", ratio=1),
@@ -163,6 +181,7 @@ class RichDashboardCallback(Callback):
 
         self._live = Live(
             self._render(),
+            console=self._console,
             refresh_per_second=self.refresh_hz,
             screen=False,
             transient=False,
@@ -170,9 +189,11 @@ class RichDashboardCallback(Callback):
         self._live.__enter__()
 
         if self.enable_chat:
-            t = threading.Thread(target=self._chat_worker, daemon=True)
-            t.start()
-            self._threads.append(t)
+            chat_thread = threading.Thread(target=self._chat_worker, daemon=True)
+            input_thread = threading.Thread(target=self._input_worker, daemon=True)
+            chat_thread.start()
+            input_thread.start()
+            self._threads.extend((chat_thread, input_thread))
 
         t_render = threading.Thread(target=self._render_loop, daemon=True)
         t_render.start()
@@ -205,16 +226,10 @@ class RichDashboardCallback(Callback):
         best = min(trainer.history.total_loss) if trainer.history.total_loss else float("nan")
         with self._lock:
             self.logs.append(f"── training complete  |  best_loss={best:.4e} ──")
-        self.status = "Training complete. Chat stays live until you quit."
+        if self.enable_chat:
+            self.status = "Training complete."
 
-        # Let the last frame render, then tear down the render thread.
-        time.sleep(0.3)
-        self._stop_event.set()
-        for t in self._threads:
-            t.join(timeout=2.0)
-
-        if self._live is not None:
-            self._live.__exit__(None, None, None)
+        self._shutdown()
 
         if self.log_file:
             self._export_logs()
@@ -256,6 +271,22 @@ class RichDashboardCallback(Callback):
             self._live.update(self._render())
             time.sleep(interval)
 
+    def _input_worker(self) -> None:
+        """Read chat prompts without blocking the training thread."""
+        while not self._stop_event.is_set():
+            try:
+                command = self._console.input("[bold cyan]You[/]> ").strip()
+            except (EOFError, KeyboardInterrupt, OSError):
+                self._stop_event.set()
+                return
+
+            if not command:
+                continue
+            if command.lower() in ("quit", "exit"):
+                self._cmd_queue.put(command)
+                return
+            self._cmd_queue.put(command)
+
     def _chat_worker(self) -> None:
         """Runs a blocking stdin-read loop + llama.cpp inference off the
         main/training thread, so chatting never stalls the trainer."""
@@ -265,15 +296,27 @@ class RichDashboardCallback(Callback):
             except queue.Empty:
                 continue
             if cmd.lower() in ("quit", "exit"):
+                self._stop_event.set()
                 break
 
             with self._lock:
+                recent_chat = list(self.chat_history)[-12:]
                 self.chat_history.append(f"You: {cmd}")
                 self.chat_history.append("Agent: ")
             reply_idx = len(self.chat_history) - 1
 
+            with self._lock:
+                training_status = self.status
+                recent_logs = "\n".join(list(self.logs)[-20:])
+
             prompt = (
-                f"<|system|>\n{self.system_prompt}<|end|>\n"
+                f"<|system|>\n{self.system_prompt}\n\n"
+                f"Current training status:\n{training_status}\n\n"
+                "Latest live training results (newest last):\n"
+                f"{recent_logs or '(No training results logged yet.)'}\n\n"
+                "Recent conversation:\n"
+                f"{chr(10).join(recent_chat) or '(No earlier messages.)'}"
+                f"<|end|>\n"
                 f"<|user|>\n{cmd}<|end|>\n"
                 f"<|assistant|>\n"
             )
@@ -281,6 +324,8 @@ class RichDashboardCallback(Callback):
                 prompt, max_tokens=512, stop=["<|end|>"], stream=True, temperature=0.7
             )
             for chunk in stream:
+                if self._stop_event.is_set():
+                    break
                 token = chunk["choices"][0]["text"]
                 with self._lock:
                     self.chat_history[reply_idx] += token
@@ -291,6 +336,20 @@ class RichDashboardCallback(Callback):
         if not self.enable_chat:
             raise RuntimeError("Chat is disabled (enable_chat=False).")
         self._cmd_queue.put(message)
+
+    def _shutdown(self) -> None:
+        """Stop workers and restore the terminal after a dashboard run."""
+        self._stop_event.set()
+        current = threading.current_thread()
+        for thread in self._threads:
+            if thread is not current:
+                thread.join(timeout=2.0)
+
+        if self._live is not None:
+            self._live.__exit__(None, None, None)
+            self._live = None
+
+        self._threads = []
 
     def _export_logs(self) -> None:
         # Explicit UTF-8: the default `open()` encoding is the platform
