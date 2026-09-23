@@ -40,7 +40,12 @@ Equations implemented
 """
 from __future__ import annotations
 
+import difflib
+import inspect
 import math
+import re
+import threading
+from dataclasses import replace as _dc_replace
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 
 from physai.backends.base import AbstractBackend, Tensor
@@ -3223,6 +3228,242 @@ class MixedResidual(PDEResidual):
         return out
 
 
+# ---------------------------------------------------------------------------
+# User-extensible registry: register_pde / unregister_pde
+# ---------------------------------------------------------------------------
+
+_REGISTRY_LOCK = threading.RLock()
+_PDE_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+
+#: Snapshot of the shipped equations. Built-ins can only be replaced with an
+#: explicit ``overwrite=True`` and can always be restored by ``unregister_pde``.
+_BUILTIN_PDE_CLASSES: Dict[str, type] = dict(PDE_REGISTRY)
+_BUILTIN_PDE_NAMES = frozenset(_BUILTIN_PDE_CLASSES)
+_BUILTIN_META_BACKUP: Dict[str, Any] = {}   # key -> original PDEMeta (set on first overwrite)
+_USER_PDE_NAMES: set = set()
+
+
+def _normalise_pde_name(name: Any, what: str = "name") -> str:
+    if not isinstance(name, str):
+        raise TypeError(f"PDE {what} must be a str, got {type(name).__name__}.")
+    key = name.strip().lower()
+    if not _PDE_NAME_RE.match(key):
+        raise ValueError(
+            f"Invalid PDE {what} {name!r}: use letters, digits and "
+            "underscores only, starting with a letter (e.g. 'my_pde'). "
+            "Names are case-insensitive."
+        )
+    return key
+
+
+def _validate_residual_class(cls: Any) -> None:
+    if not isinstance(cls, type):
+        raise TypeError(
+            f"register_pde expects a class, got {type(cls).__name__}. "
+            "Pass the class itself (not an instance): register_pde('x', MyResidual)."
+        )
+    if not issubclass(cls, PDEResidual):
+        raise TypeError(
+            f"{cls.__name__} must subclass physai.PDEResidual. If you only "
+            "have a plain function (model_fn, points) -> residual, pass it "
+            "straight to Trainer(residual=...) instead of registering it."
+        )
+    if cls is PDEResidual or inspect.isabstract(cls):
+        raise TypeError(f"{cls.__name__} is abstract; register a concrete subclass.")
+    if cls.__call__ is PDEResidual.__call__:
+        raise TypeError(
+            f"{cls.__name__} must override __call__(self, model_fn, points) "
+            "and return the residual tensor."
+        )
+    try:
+        sig = inspect.signature(cls)
+    except (TypeError, ValueError):
+        return  # signature not introspectable; trust the class
+    try:
+        sig.bind(None)  # build_residual calls cls(backend, **kwargs)
+    except TypeError:
+        raise TypeError(
+            f"{cls.__name__}.__init__ must accept the backend as its first "
+            f"positional argument (build_residual calls cls(backend, **kwargs)); "
+            f"got signature {sig}."
+        ) from None
+
+
+def _coerce_pde_meta(key: str, meta: Any, cls: type, existing: Any, ao: Any) -> Any:
+    """Turn user input (PDEMeta | dict | None) into a validated PDEMeta for ``key``."""
+    if meta is None:
+        meta = getattr(cls, "PDE_META", None)
+    if meta is None:
+        meta = existing                      # keep prior metadata when overwriting
+    if meta is None:
+        meta = dict(ao.PDE_META_DEFAULTS)    # generic defaults, no warning later
+    if isinstance(meta, dict):
+        data = {**ao.PDE_META_DEFAULTS, **meta}
+        data.pop("name", None)
+        try:
+            meta = ao.PDEMeta(name=key, **data)
+        except TypeError as exc:
+            raise TypeError(f"Invalid meta dict for '{key}': {exc}") from None
+    elif isinstance(meta, ao.PDEMeta):
+        meta = _dc_replace(meta, name=key)
+    else:
+        raise TypeError(
+            f"meta must be a PDEMeta, a dict of PDEMeta fields, or None; "
+            f"got {type(meta).__name__}."
+        )
+    ao._validate_pde_meta(meta)
+    return meta
+
+
+def register_pde(
+    name: str,
+    cls: Optional[type] = None,
+    *,
+    meta: Any = None,
+    aliases: Sequence[str] = (),
+    overwrite: bool = False,
+):
+    """Register a user-defined PDE residual so it works by *name* everywhere.
+
+    After registration ``build_residual(name, backend, **params)``,
+    ``ProblemSpec(pde_name=name, ...)``, ``AutoOptimizer`` and residual-
+    adaptive refinement all resolve it exactly like a built-in equation.
+
+    Use as a function or a decorator::
+
+        class MyPDE(physai.PDEResidual):
+            def __call__(self, model_fn, points):
+                u_t = _time_deriv(self.backend, model_fn, points, mode=self.diff_mode)
+                ...
+                return u_t - self.params.get("k", 1.0) * lap
+
+        physai.register_pde("my_pde", MyPDE, meta={"order": 2, "nonlinear": False})
+
+        @physai.register_pde("my_pde2", meta={"order": 4})
+        class MyPDE2(physai.PDEResidual): ...
+
+    Parameters
+    ----------
+    name : case-insensitive identifier (letters, digits, ``_``; starts with a letter).
+    cls : concrete ``PDEResidual`` subclass that overrides ``__call__`` and whose
+        constructor accepts ``backend`` as first positional argument. Omit to use
+        as a decorator.
+    meta : optional hints for AutoOptimizer -- a ``PDEMeta``, a dict with any of
+        ``order, nonlinear, n_components, stiff, spectral_bias ("low"|"mixed"|"high"),
+        recommended_arch ("pinn"|"fno"|"both")``, or None. Resolution order when
+        None: ``cls.PDE_META`` attribute, then the existing metadata (when
+        overwriting), then generic defaults (order 2, linear, 1 field, "pinn").
+    aliases : extra names resolving to the same class (each gets its own meta entry).
+    overwrite : allow replacing an existing name. Required for shipped equations.
+        Re-running a notebook cell that redefines *your own* class (same module and
+        qualname) is accepted without it.
+
+    The call is atomic: on any error nothing is registered. Returns ``cls``.
+    """
+    if cls is None:
+        if isinstance(name, type):
+            raise TypeError(
+                "Use register_pde('name', Class) or @register_pde('name'); "
+                "the name is required."
+            )
+        # Fail fast on a bad name/aliases before the decorated class is seen.
+        _normalise_pde_name(name)
+        for a in ((aliases,) if isinstance(aliases, str) else aliases):
+            _normalise_pde_name(a, "alias")
+
+        def _decorator(c: type) -> type:
+            return register_pde(name, c, meta=meta, aliases=aliases, overwrite=overwrite)
+
+        return _decorator
+
+    if isinstance(aliases, str):
+        aliases = (aliases,)
+    keys = [_normalise_pde_name(name)] + [_normalise_pde_name(a, "alias") for a in aliases]
+    if len(set(keys)) != len(keys):
+        raise ValueError(f"Duplicate names in {keys}.")
+    _validate_residual_class(cls)
+
+    from physai.core import auto_optimizer as ao  # lazy: heavy, and avoids import cycles
+
+    with _REGISTRY_LOCK:
+        # ---- phase 1: validate everything, mutate nothing --------------------
+        plan = []
+        for key in keys:
+            old_cls = PDE_REGISTRY.get(key)
+            if old_cls is not None and not overwrite:
+                same_user_class = (
+                    key not in _BUILTIN_PDE_NAMES
+                    and key in _USER_PDE_NAMES
+                    and (old_cls is cls or (
+                        old_cls.__module__ == cls.__module__
+                        and old_cls.__qualname__ == cls.__qualname__
+                    ))
+                )
+                if not same_user_class:
+                    origin = "built-in" if key in _BUILTIN_PDE_NAMES else "already registered"
+                    raise ValueError(
+                        f"PDE '{key}' is {origin} ({old_cls.__name__}). "
+                        "Pass overwrite=True to replace it, or pick another name."
+                    )
+            old_meta = ao.get_pde_meta(key)
+            plan.append((key, old_cls, old_meta, _coerce_pde_meta(key, meta, cls, old_meta, ao)))
+
+        # ---- phase 2: commit, roll back on any failure ------------------------
+        done = []
+        try:
+            for key, old_cls, old_meta, new_meta in plan:
+                if key in _BUILTIN_PDE_NAMES and key not in _BUILTIN_META_BACKUP:
+                    _BUILTIN_META_BACKUP[key] = old_meta
+                PDE_REGISTRY[key] = cls
+                ao.register_pde_meta(new_meta, overwrite=True)
+                done.append((key, old_cls, old_meta))
+        except BaseException:
+            for key, old_cls, old_meta in reversed(done):
+                if old_cls is None:
+                    PDE_REGISTRY.pop(key, None)
+                else:
+                    PDE_REGISTRY[key] = old_cls
+                if old_meta is None:
+                    ao.unregister_pde_meta(key)
+                else:
+                    ao.register_pde_meta(old_meta, overwrite=True)
+            raise
+        for key, _, _, _ in plan:
+            if key not in _BUILTIN_PDE_NAMES:
+                _USER_PDE_NAMES.add(key)
+    return cls
+
+
+def unregister_pde(name: str, *, missing_ok: bool = False) -> None:
+    """Undo ``register_pde`` for ``name`` (registry entry and metadata).
+
+    * user-registered name -> removed;
+    * shipped equation you replaced with ``overwrite=True`` -> the original
+      class and metadata are restored;
+    * untouched shipped equation -> ``ValueError`` (built-ins can't be removed).
+    """
+    key = _normalise_pde_name(name)
+    from physai.core import auto_optimizer as ao
+
+    with _REGISTRY_LOCK:
+        if key in _BUILTIN_PDE_NAMES:
+            if PDE_REGISTRY.get(key) is _BUILTIN_PDE_CLASSES[key]:
+                raise ValueError(f"'{key}' is a built-in PDE and cannot be unregistered.")
+            PDE_REGISTRY[key] = _BUILTIN_PDE_CLASSES[key]
+            orig = _BUILTIN_META_BACKUP.pop(key, None)
+            if orig is not None:
+                ao.register_pde_meta(orig, overwrite=True)
+            return
+        if key not in PDE_REGISTRY:
+            if missing_ok:
+                ao.unregister_pde_meta(key)
+                return
+            raise KeyError(f"PDE '{key}' is not registered.")
+        del PDE_REGISTRY[key]
+        _USER_PDE_NAMES.discard(key)
+        ao.unregister_pde_meta(key)
+
+
 def build_residual(
     name: str,
     backend: AbstractBackend,
@@ -3234,10 +3475,16 @@ def build_residual(
     >>> r = build_residual("burgers", backend, nu=0.01)
     >>> loss = r.loss(model_fn, collocation_points)
     """
-    cls = PDE_REGISTRY.get(name.lower())
+    if not isinstance(name, str):
+        raise TypeError(f"PDE name must be a str, got {type(name).__name__}.")
+    key = name.strip().lower()
+    cls = PDE_REGISTRY.get(key)
     if cls is None:
+        close = difflib.get_close_matches(key, list(PDE_REGISTRY), n=3)
+        hint = f" Did you mean {close}?" if close else ""
         raise ValueError(
-            f"Unknown PDE '{name}'. Available: {list(PDE_REGISTRY)}."
+            f"Unknown PDE '{name}'.{hint} Available: {list(PDE_REGISTRY)}. "
+            "Custom equations: physai.register_pde(name, cls)."
         )
     return cls(backend, **kwargs)
 
@@ -3247,6 +3494,8 @@ __all__ = [
     "MixedResidual",
     "PDE_REGISTRY",
     "build_residual",
+    "register_pde",
+    "unregister_pde",
     
     # Original Systems
     "PoissonResidual",

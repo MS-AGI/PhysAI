@@ -2,6 +2,9 @@ from .auto_optimizer import AutoOptimizer as AutoOptimizer, DomainSpec as Domain
 from .losses import LossTerm as LossTerm, WeightedLossComposite as WeightedLossComposite, data_loss as data_loss, dirichlet_loss as dirichlet_loss, gradient_penalty as gradient_penalty, huber_loss as huber_loss, log_cosh_loss as log_cosh_loss, mae_loss as mae_loss, mse_loss as mse_loss, neumann_loss as neumann_loss, periodic_loss as periodic_loss, robin_loss as robin_loss, sobolev_loss as sobolev_loss, spectral_energy_loss as spectral_energy_loss
 from .pde_residual import PoissonResidual as PoissonResidual, HeatResidual as HeatResidual, WaveResidual as WaveResidual, BurgersResidual as BurgersResidual, NavierStokesResidual as NavierStokesResidual, AdvectionResidual as AdvectionResidual, HelmholtzResidual as HelmholtzResidual, AllenCahnResidual as AllenCahnResidual, CahnHilliardResidual as CahnHilliardResidual, SchrodingerResidual as SchrodingerResidual, KleinGordonResidual as KleinGordonResidual, ReactionDiffusionResidual as ReactionDiffusionResidual, EikonalResidual as EikonalResidual, DarcyResidual as DarcyResidual, EulerResidual as EulerResidual, BiharmonicResidual as BiharmonicResidual, StokesResidual as StokesResidual, NLSResidual as NLSResidual, KdVResidual as KdVResidual, FokkerPlanckResidual as FokkerPlanckResidual, NonlinearSchrodinger2DResidual as NonlinearSchrodinger2DResidual, SineGordon2DResidual as SineGordon2DResidual, FisherKPPResidual as FisherKPPResidual, KleinGordonNonlinear2DResidual as KleinGordonNonlinear2DResidual, FitzHughNagumoResidual as FitzHughNagumoResidual, CahnHilliard2DResidual as CahnHilliard2DResidual, KuramotoSivashinskyResidual as KuramotoSivashinskyResidual, KadomtsevPetviashviliResidual as KadomtsevPetviashviliResidual, PorousMediumResidual as PorousMediumResidual, BiharmonicSteadyResidual as BiharmonicSteadyResidual, BoussinesqWaveResidual as BoussinesqWaveResidual, EulerTricomiResidual as EulerTricomiResidual, FokkerPlanck2DResidual as FokkerPlanck2DResidual, SwiftHohenbergResidual as SwiftHohenbergResidual, BlackScholes2DResidual as BlackScholes2DResidual, RegularisedLongWaveResidual as RegularisedLongWaveResidual, GiererMeinhardtResidual as GiererMeinhardtResidual, GrayScottResidual as GrayScottResidual, ViscousWaveResidual as ViscousWaveResidual, RadhakrishnanKunduLakshmananResidual as RadhakrishnanKunduLakshmananResidual, ComplexGinzburgLandau2DResidual as ComplexGinzburgLandau2DResidual, DriftDiffusionPoissonResidual as DriftDiffusionPoissonResidual, ShallowWater2DResidual as ShallowWater2DResidual, HestonVolatilityResidual as HestonVolatilityResidual, PhaseFieldCrystalResidual as PhaseFieldCrystalResidual, BrinkmanDarcyFlowResidual as BrinkmanDarcyFlowResidual, PeronaMalikResidual as PeronaMalikResidual, Burgers2DResidual as Burgers2DResidual, BoussinesqConvectionResidual as BoussinesqConvectionResidual, DendriticSolidificationResidual as DendriticSolidificationResidual, RelativisticFluidCoreResidual as RelativisticFluidCoreResidual, EinsteinFieldResidual as EinsteinFieldResidual, PhononResidual as PhononResidual, DiracResidual as DiracResidual, BoseEinsteinCondensateResidual as BoseEinsteinCondensateResidual, FermiGasResidual as FermiGasResidual, QuantumRelativisticFluidResidual as QuantumRelativisticFluidResidual, PDEResidual as PDEResidual, MixedResidual as MixedResidual, PDE_REGISTRY as PDE_REGISTRY, build_residual as build_residual
 
+from .pde_residual import register_pde as register_pde, unregister_pde as unregister_pde
+from .auto_optimizer import PDE_META_DEFAULTS as PDE_META_DEFAULTS, get_pde_meta as get_pde_meta, register_pde_meta as register_pde_meta, unregister_pde_meta as unregister_pde_meta
+
 __all__ = [
     "PDEMeta",
     "DomainSpec",
@@ -73,6 +76,12 @@ __all__ = [
     "FermiGasResidual",
     "QuantumRelativisticFluidResidual",
     "PDE_REGISTRY",
+    "register_pde",
+    "unregister_pde",
+    "PDE_META_DEFAULTS",
+    "get_pde_meta",
+    "register_pde_meta",
+    "unregister_pde_meta",
     "build_residual",
     "mse_loss",
     "mae_loss",

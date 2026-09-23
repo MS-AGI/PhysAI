@@ -255,7 +255,7 @@ class Geometry:
         clouds), since it only needs ``self.distance``/its numeric
         gradient, not an analytic parametrization of the surface.
 
-        Used by ``Solver.solve_geometry`` (see ``physai.solvers.dedalus``)
+        Used by ``Solver.solve_geometry`` (see ``physai.solvers.solver``)
         to place its embedded-boundary substitution at the true surface
         location rather than at a raw exterior grid-neighbor coordinate.
         """

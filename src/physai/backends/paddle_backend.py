@@ -421,6 +421,10 @@ class PaddleBackend(AbstractBackend):
             value, jvp_out = _paddle_jvp(func, inputs, tangents)
         except RuntimeError as e:
             if "nullptr" in str(e) or "DX can not be" in str(e):
+                print(
+                    "Note: PaddlePaddle does not support this JVP operation "
+                    "in the installed build; use reverse-mode differentiation instead."
+                )
                 raise NotImplementedError(
                     "PaddleBackend.jvp is unavailable in this Paddle build: "
                     "both a hand-rolled double-backward implementation and "
@@ -609,7 +613,8 @@ class PaddleBackend(AbstractBackend):
         if optimizer_name.lower() != "adamw":
             kwargs.pop("weight_decay", None)  # Only AdamW takes weight_decay here
 
-        return cls(learning_rate=lr, parameters=model.parameters(), **kwargs)
+        parameters = model if isinstance(model, (list, tuple)) else model.parameters()
+        return cls(learning_rate=lr, parameters=parameters, **kwargs)
 
     def optimizer_step(
         self,

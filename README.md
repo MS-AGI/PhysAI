@@ -6,257 +6,24 @@
 [![License: AGPL-3.0](https://img.shields.io/badge/AGPL_License_3.0-indigo.svg)](https://opensource.org/licenses/agpl-3-0)
 ![PyPI - Total Downloads](https://img.shields.io/pypi/dw/physai?color=blue&label=Weekly%20Downloads)
 [![Socket Badge](https://badge.socket.dev/pypi/package/physai/4.0.0?artifact_id=tar-gz)](https://badge.socket.dev/pypi/package/physai/4.0.0?artifact_id=tar-gz)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17493878.svg)](https://doi.org/10.5281/zenodo.17493878)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17214724.svg)](https://doi.org/10.5281/zenodo.17214724)
 [![▶ Open Demo Site](https://img.shields.io/badge/Site_&_Demo-View%20the%20site-FFDB3A)](https://ms-agi.github.io/PhysAI/)
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PhysAI: A Multi-Backend Physics-Informed Neural Network Library for PDE Solving at Research Scale</title>
-  <style>
-    /* Core Section Setup */
-    .attention-hero {
-      position: relative;
-      background-color: #030712;
-      color: #f3f4f6;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      padding: 8rem 2rem;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      overflow: hidden;
-    }
 
-    /* Ambient Glow Effects */
-    .hero-glow-1, .hero-glow-2 {
-      position: absolute;
-      width: 400px;
-      height: 400px;
-      border-radius: 50%;
-      filter: blur(120px);
-      opacity: 0.15;
-      z-index: 1;
-      pointer-events: none;
-    }
-    .hero-glow-1 { background: #3b82f6; top: -10%; left: 20%; }
-    .hero-glow-2 { background: #8b5cf6; bottom: -10%; right: 20%; }
+> [Click Here to Jump to Citation](#citation) | If you use PhysAI, neural operators, or its cross-validation tools in academic work, please cite the project using [DOI 10.5281/zenodo.17214724](https://doi.org).
 
-    .hero-content {
-      position: relative;
-      z-index: 2;
-      max-width: 850px;
-      margin: 0 auto;
-    }
+### Unified Operator Synthesis & Cross-Validation
 
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      text-decoration: none;
-      padding: 0.5rem 1rem;
-      background: rgba(98, 96, 96, 0.31);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 9999px;
-      font-weight: 900;
-      color: #9a78f0;
-      margin-bottom: 2rem;
-      transition: all 0.2s ease;
-    }
-    .badge:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
+PhysAI is an open-source, multi-backend framework for solving partial differential equations with Physics-Informed Neural Networks (PINNs), Fourier Neural Operators (FNOs), and Unified Spectral Element architectures.
 
-    .hero-content h1 {
-      font-size: 3.5rem;
-      font-weight: 800;
-      line-height: 1.2;
-      letter-spacing: -0.02em;
-      margin-bottom: 1.5rem;
-    }
-    @media (max-width: 768px) {
-      .hero-content h1 { font-size: 2.5rem; }
-    }
+<table>
+  <tr>
+    <td><a href="https://github.com/MS-AGI/PhysAI#installation"><img src="https://img.shields.io/badge/Installation-Guide-4F46E5?style=for-the-badge" alt="Installation Guide"></a></td>
+    <td><a href="https://github.com/MS-AGI/PhysAI#quick-start"><img src="https://img.shields.io/badge/Quick_Start-Examples-0F766E?style=for-the-badge" alt="Quick Start examples"></a></td>
+    <td><a href="https://ms-agi.github.io/PhysAI/"><img src="https://img.shields.io/badge/Live-Site-F59E0B?style=for-the-badge" alt="Live site"></a></td>
+  </tr>
+</table>
 
-    .text-gradient {
-      background: linear-gradient(135deg, #9a91fb, #a13ef8, #5706d1);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .hero-content p {
-      font-size: 1.15rem;
-      color: #9ca3af;
-      line-height: 1.6;
-      max-width: 720px;
-      margin: 0 auto 2.5rem auto;
-    }
-
-    /* Citation Callout Note */
-    .citation-box {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      text-decoration: none;
-      height: 125;
-      width: 100%;
-      padding: 0.5rem 0.5rem;
-      
-      background: rgba(137, 4, 4, 0.27);
-      border: 2px solid rgba(255, 176, 176, 0.95);
-      border-radius: 25px;
-      font-weight: 500;
-      color: #050114;
-      margin-bottom: 2rem;
-      animation: activeGlow 2s infinite ease-in-out;
-    }
-
-  /* 2. Define the glowing animation keyframes */
-    @keyframes activeGlow {
-      0% {
-        box-shadow: 0 0 5px rgba(245, 158, 11, 0.2);
-        border-color: #f59e0b;
-      }
-      50% {
-        /* The peak of the glow: broader spread and brighter border */
-        box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
-        border-color: #fbbf24;
-      }
-      100% {
-        box-shadow: 0 0 5px rgba(245, 158, 11, 0.2);
-        border-color: #f59e0b;
-      }
-    }
-    .citation-box:hover {
-      background: rgba(243, 108, 108, 0.18)
-    }
-    .citation-note {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 0.85rem;
-      color: #6b7280;
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
-      padding-top: 1.5rem;
-    }
-    .citation-note code {
-      background: rgba(255, 255, 255, 0.05);
-      padding: 0.125rem 0.25rem;
-      border-radius: 0.25rem;
-      color: #d1d5db;
-    }
-
-    /* ─── FIXED BUTTONS ENGINE ─── */
-    .cta-group {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      align-items: center;
-    }
-    
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.625rem;
-      white-space: nowrap;
-      padding: 0.875rem 2rem;
-      font-size: 1rem;
-      font-weight: 600;
-      border-radius: 0.75rem;
-      text-decoration: none;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      box-sizing: border-box;
-    }
-
-    .btn-primary {
-      background-color: #ffffff;
-      color: #0f172a;
-      box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05), 0px 0px 20px rgba(99, 102, 241, 0.25);
-    }
-    
-    .btn-primary:hover {
-      background-color: #f3f4f6;
-      transform: translateY(-2px);
-      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15), 0px 0px 30px rgba(99, 102, 241, 0.45);
-    }
-    
-    .btn-arrow {
-      display: inline-block;
-      flex-shrink: 0;
-      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    .btn-primary:hover .btn-arrow {
-      transform: translateX(4px);
-    }
-
-    .btn-secondary {
-      background-color: transparent;
-      color: #ffffff;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-    }
-    
-    .btn-secondary:hover {
-      background-color: rgba(255, 255, 255, 0.05);
-      border-color: rgba(255, 255, 255, 0.35);
-    }
-
-    /* Responsive Stack Breakpoint */
-    @media (max-width: 540px) {
-      .cta-group { 
-        flex-direction: column; 
-        width: 100%;
-        padding: 0 1rem;
-      }
-      .btn { 
-        width: 100%; 
-      }
-    }
-  </style>
-</head>
-<body>
-
-<section class="attention-hero">
-  <div class="hero-glow-1"></div>
-  <div class="hero-glow-2"></div>
-  
-  <div class="hero-content">
-    <!-- Requested Citation Notice Component -->
-    <a href="#citation" class="citation-box">
-    <div class="citation-note">
-      <p>If you leverage this library, neural operators, or cross-validation pipelines in your academic publications, please cite our repository or reference the official Zenodo DOI record: <code>10.5281/zenodo.17493878</code>.</p>
-    </div>
-    </a>
-    <!-- Inline Flex Centered Badge Component -->
-    <a href="#testing" class="badge" style="height: 50px; width: 250px; font-size: 20px; display: inline-flex; align-items: center; justify-content: center;">Rigorously Tested</a>
-    <!-- Academic Headline String Integration -->
-    <h1>
-      PhysAI: <span class="text-gradient">Unified Operator Synthesis & Cross-Validation</span>
-    </h1>
-    <!-- Formal & Academic Description Replacing Former Boilerplate Placeholders -->
-    <p>
-      An open-source, multi-backend computing framework implementing Physics-Informed Neural Networks (PINNs), Fourier Neural Operators (FNOs), and Unified Spectral Element architectures. Streamline continuous partial differential equation solvers with invariant performance layers across PyTorch, JAX,Paddle  and TensorFlow targets.
-    </p>
-    <div class="cta-group">
-      <a href="#installation" class="btn btn-primary">
-        Installation Guide
-        <svg class="btn-arrow" xmlns="http://w3.org" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-          <polyline points="12 5 19 12 12 19"></polyline>
-        </svg>
-      </a>
-      <a href="#quick-start" class="btn btn-secondary">Quick Start</a>
-    </div>
-
-  </div>
-</section>
-
-</body>
-</html>
 
 ---
 
@@ -275,7 +42,7 @@ The library is organized around the physics problem, not the network architectur
 * **Numerical cross-validation against Dedalus**, not only closed forms: `Trainer.cross_validate(...)` runs an independent classical solve of the same equation — a genuine Dedalus spectral solve (tensor-product Chebyshev/Fourier bases, box domains) or an embedded-boundary finite-difference solve on the same arbitrary geometry the network was trained on — and reports the L2 error between the two, on the same evaluation grid. See [Numerical Cross-Validation](#numerical-cross-validation).
 * **Physics-focused visualization and animation**: loss-history, residual-field, spectrum, and 1-D/2-D solution plots, plus a dedicated N-dimensional toolkit — slicing, projection, volumetric isosurface rendering, and time or parameter-sweep animation — for fields with three, four, or more axes. See [Visualization and Animation](#visualization-and-animation).
 * **Multi-backend by construction**, not by wrapping one framework: `AbstractBackend` fixes the tensor/autodiff/optimizer surface, and `TorchBackend`, `JAXBackend`, `TensorFlowBackend`, and `PaddleBackend` each implement it, so residuals and losses are written once against the abstraction and run correctly on all four.
-* **Optional, consent-gated extras**: a live terminal training dashboard (`rich`) with an optional local-LLM chat side panel (`llama-cpp-python`), and a bundled Dedalus installer — none of these run, prompt, or download anything on `pip install`/`import physai`; they act only on explicit, per-run consent, and stay entirely inert in CI/headless environments.
+* **Optional, consent-gated extras**: a live terminal training dashboard (`rich`) with an optional local-LLM chat side panel (`llama-cpp-python`), and a bundled Conda installer for Dedalus, FiPy, FEniCS, FEniCSx, Meep, and CuPy — nothing installs on `pip install`/`import physai`; setup is user-invoked and stays inert in CI/headless environments.
 
 ---
 
@@ -304,7 +71,7 @@ cd PhysAI
 pip install -e ".[jax,tensorflow,dashboard]"
 ```
 
-Python ≥ 3.9. Dedalus, used for numerical cross-validation, is **not** pip-installable — it requires a Conda environment with MPI/FFTW — and is therefore not a `pyproject.toml` extra at all. `physai.install_dedalus()` runs a bundled cross-platform installer on explicit request; PhysAI otherwise imports and trains fully without it.
+Python ≥ 3.9. Optional native solvers use compiled dependencies such as MPI and PETSc, so the solver stack is installed with Conda rather than as a `pyproject.toml` extra. `physai.install_solver_dependencies()` or `python -m physai.solver_setup` runs the bundled installer, which creates a separate `physai-solvers` Conda environment. Activate that environment, install PhysAI there with `python -m pip install physai`, and run scripts from it to use those solver adapters.
 
 > **JAX users:** install via the `jax` extra (or `requirements.txt`) rather than an unpinned `pip install jax flax` — see [Backend Notes](#backend-notes) for why the pin matters.
 
@@ -324,13 +91,13 @@ src/physai/
 │   ├── fno.py                 # Fourier Neural Operator
 │   └── spectral_element.py, spectralpinn.py   # USENO (Chebyshev spectral element)
 ├── solvers/
-│   └── dedalus.py            # real Dedalus (box) + embedded-boundary FD (arbitrary geometry)
+│   └── solver.py             # Dedalus, embedded-boundary FD, and optional native solver adapters
 ├── geometry.py                # SDF primitives, CSG, mesh import, BoundaryConditionSet
 ├── trainer.py                 # Trainer: training loop, callbacks, cross_validate, per-backend step logic
 ├── visualization.py            # 1-D/2-D plots, loss curves, spectra, animations
 ├── visualization_nd.py          # slicing / projection / isosurfaces / animation for N-D fields
 ├── dashboard/live.py            # optional live terminal dashboard (Callback)
-├── chat_setup.py, dedalus_setup.py  # consent-gated optional-extra setup
+├── chat_setup.py, solver_setup.py   # consent-gated optional solver setup
 └── utils.py                    # sampling (LHS/Sobol), metrics, seeding, dtype helpers
 tests/
 └── test_pde_everything.py     # Tier A/B/C suite — see Testing below
@@ -344,45 +111,35 @@ requirements.txt
 
 ## Quick Start
 
-PhysAI's entry point is `AutoOptimizer`, not a hand-built model and training loop: the governing equation and domain are declared via a `ProblemSpec`, and `AutoOptimizer` emits a `RuntimeConfig` that `Trainer` consumes directly.
+These runnable examples show a user-registered Maxwell residual and animation, a wave PINN cross-validated against Dedalus, and a PINN trained with the Einstein vacuum residual using Schwarzschild exterior metric data. Run commands from the repository root after installing PhysAI and the relevant dependencies.
 
-```python
-import numpy as np
-from physai.backends import get_backend
-from physai.core.auto_optimizer import ProblemSpec, AutoOptimizer
-from physai.core.pde_residual import build_residual
-from physai.geometry import DomainSpec, box, BoundaryConditionSet, everywhere
-from physai.trainer import Trainer
+### 1. Register Maxwell's equations and animate the field
 
-backend = get_backend("torch", device="cpu") # Simple API style backend- change with a single string change!
+This example registers a one-dimensional vacuum Maxwell system with `register_pde`, trains six field outputs, and animates the transverse electric field `Ey`. See [examples/maxwell_animation.py](examples/maxwell_animation.py).
 
-# 2-D Poisson equation, ∇²u = f, on the unit box, with a manufactured
-# solution u(x, y) = x² + y² imposed as Dirichlet data on the boundary.
-domain = DomainSpec(spatial_dims=2, bounds=[(-1, 1), (-1, 1)])
-analytic = lambda x: (x[:, 0] ** 2 + x[:, 1] ** 2).reshape(-1, 1)
+~~~bash
+python examples/maxwell_animation.py
+~~~
 
-geom = box(domain.bounds)
-bcs = BoundaryConditionSet(geom)
-bcs.add("dirichlet", value=lambda x: analytic(x).astype(np.float32), region=everywhere)
+### 2. Solve the wave equation and cross-validate
 
-spec = ProblemSpec(pde_name="poisson", domain=domain, backend_name="torch")
-config = AutoOptimizer(backend, verbose=True).analyse(spec)          # sizes the network, picks lr/optimizer/etc.
-residual = build_residual("poisson", backend)
+This example trains the first-order state `(u, v)` for the wave equation and compares both fields with an independent Dedalus solve. Install the optional Dedalus dependency to run it. See [examples/wave_cross_validation.py](examples/wave_cross_validation.py).
 
-rng = np.random.default_rng(0)
-coll = backend.tensor(rng.uniform(-1, 1, size=(2048, 2)).astype(np.float32))
+~~~bash
+python examples/wave_cross_validation.py
+~~~
 
-trainer = Trainer(
-    backend=backend, config=config, residual=residual,
-    collocation_points=coll, boundary_conditions=bcs,
-)
-history = trainer.train()
-```
+### 3. Fit a Schwarzschild exterior with the Einstein field residual
 
-Swap `TorchBackend()` for `JAXBackend()`, `TensorFlowBackend()`, or `PaddleBackend()` and the rest of the script is unchanged — `AutoOptimizer` reads `spec.backend_name` for backend-specific choices such as default precision. **One JAX-specific step:** because JAX/Flax keep parameters outside the model object rather than on it, call `trainer.init_jax(dummy_input)` once, immediately after constructing `Trainer` and before `trainer.train()`, whenever `backend.name == "jax"`.
+This example trains `einstein_field` against the exact isotropic-coordinate Schwarzschild vacuum metric on a spatial region outside the horizon. It is a Schwarzschild exterior spacetime example, not a cosmological model. See [examples/schwarzschild_einstein_residual.py](examples/schwarzschild_einstein_residual.py).
+
+~~~bash
+python examples/schwarzschild_einstein_residual.py
+~~~
+
+One JAX-specific step for other scripts: because JAX/Flax keep parameters outside the model object rather than on it, call trainer.init_jax(dummy_input) once after constructing Trainer and before trainer.train() when using the JAX backend.
 
 ---
-
 ## Governing Equations
 
 `physai.core.pde_residual.PDE_REGISTRY` currently implements 57 residuals (`_PDE_META` in `auto_optimizer.py` records each equation's order, nonlinearity, and stiffness for `AutoOptimizer`'s heuristics):
@@ -417,7 +174,7 @@ This list reflects current development priorities and is not a commitment to a s
 
 ## Numerical Cross-Validation
 
-Beyond checking a trained network against a closed-form solution (available for only a curated subset of equations), `Trainer.cross_validate(...)` checks it against an **independent classical numerical solve** of the same governing equation, run by `physai.solvers.dedalus.Solver`, and reports the L2 error between the two on a shared evaluation grid. Two solve paths are dispatched from the same method:
+Beyond checking a trained network against a closed-form solution (available for only a curated subset of equations), `Trainer.cross_validate(...)` checks it against an **independent classical numerical solve** of the same governing equation, run by `physai.solvers.solver.Solver`, and reports the L2 error between the two on a shared evaluation grid. Two solve paths are dispatched from the same method:
 
 * **Box domains** (`geometry=None`, the default) — a genuine [Dedalus](https://dedalus-project.org/) spectral solve (`Solver.solve_box`): a tensor-product Chebyshev/Fourier basis per axis, Dedalus's own IVP solver and tau-correction compiler, and its own independent timestepper and discretization. Requires `domain_type`, `bounds`, `variables`, `equations`, `bcs`, and `ics`; `domain_type`/`bounds`/`grid_points` each accept either a single value (applied to every axis) or a per-axis list, so this path is not limited to one spatial dimension.
 * **Arbitrary geometry** (`geometry=<a physai.geometry.Geometry>`) — an embedded-boundary finite-difference solve (`Solver.solve_geometry`) on a masked regular N-D grid, assembled with `scipy.sparse` (or `cupyx.scipy.sparse` on GPU, if `array_module="cupy"`). Dedalus's own spectral bases are built for boxes and specific curvilinear coordinate systems, not arbitrary CSG/SDF domains, so this path exists specifically for geometries Dedalus can't represent. **Currently scoped to `"poisson"`, `"helmholtz"`, and `"heat"`**.
@@ -509,7 +266,7 @@ If you use **PhysAI** in your research, academic publication, or official work, 
 Please cite the software as follows:
 
 **APA:**
-> Singh, M. ([https://orcid.org/0009-0009-3913-6929](https://orcid.org/0009-0009-3913-6929)) (2026). *PhysAI: A Multi-Backend Physics-Informed Neural Network Framework for Solving, Cross-Validating, and Visualizing Ordinary and Partial Differential Equations* (Version 5.0.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.17493878
+> Singh, M. ([https://orcid.org/0009-0009-3913-6929](https://orcid.org/0009-0009-3913-6929)) (2026). *PhysAI: A Multi-Backend Physics-Informed Neural Network Framework for Solving, Cross-Validating, and Visualizing Ordinary and Partial Differential Equations* (Version 5.0.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.17214724
 
 **BibTeX:**
 ```bibtex
@@ -520,8 +277,8 @@ Please cite the software as follows:
   year         = 2026,
   publisher    = {Zenodo},
   version      = {5.0.0},
-  doi          = {10.5281/zenodo.17493878},
-  url          = {https://doi.org/10.5281/zenodo.17493878},
+  doi          = {10.5281/zenodo.17214724},
+  url          = {https://doi.org/10.5281/zenodo.17214724},
   orcid        = {0009-0009-3913-6929}
 }
 ```

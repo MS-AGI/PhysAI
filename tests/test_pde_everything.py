@@ -1059,7 +1059,7 @@ def test_tier_c_heat_matches_dedalus(backend_name):
     is backend-independent but the PINN half of the comparison isn't.
     """
     backend = AVAILABLE_BACKENDS[backend_name]
-    from physai.solvers.dedalus import Solver
+    from physai.solvers.solver import Solver
 
     alpha = 0.1
 
@@ -1121,7 +1121,7 @@ def test_tier_c_wave_matches_dedalus(backend_name):
     once per installed backend.
     """
     backend = AVAILABLE_BACKENDS[backend_name]
-    from physai.solvers.dedalus import Solver
+    from physai.solvers.solver import Solver
 
     c = 1.0
 

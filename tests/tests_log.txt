@@ -1,7 +1,7 @@
 
 ============================= test session starts =============================
 platform win32 -- Python 3.13.3, pytest-8.4.2, pluggy-1.6.0
-rootdir: D:\desktop2\public-impact\python-packages\physai-library
+rootdir: [Undisclosable Root DIR]
 configfile: pyproject.toml
 plugins: anyio-4.9.0, langsmith-0.3.42, cov-7.1.0
 collecting 4 items                                                      collecting 69 items                                                     collecting 201 items                                                    collected 651 items                                                            
@@ -108,16 +108,16 @@ tests/test-trainer-backend/tf_train_test.py::TestTrainerTensorFlow::test_lbfgs_p
     distutils.version.LooseVersion(required_tensorflow_version)):
 
 tests/test-trainer-backend/tf_train_test.py::TestTrainerTensorFlow::test_lbfgs_phase_tf_runs_to_completion_or_falls_back
-  D:\desktop2\public-impact\python-packages\physai-library\src\physai\trainer.py:1337: UserWarning: tensorflow_probability is required for TensorFlow L-BFGS (install via 'pip install physai[tensorflow]'). Falling back to low-LR fine-tuning instead of true L-BFGS.
+  [Undisclosable Root DIR]\src\physai\trainer.py:1337: UserWarning: tensorflow_probability is required for TensorFlow L-BFGS (install via 'pip install physai[tensorflow]'). Falling back to low-LR fine-tuning instead of true L-BFGS.
     warnings.warn(
 
 tests/test_losses.py::TestRegularisationLosses::test_sobolev_loss_positive_for_nonconstant_function
-  D:\desktop2\public-impact\python-packages\physai-library\tests\test_losses.py:233: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+  [Undisclosable Root DIR]\tests\test_losses.py:233: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
   Consider using tensor.detach() first. (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\pytorch\torch\csrc\autograd\generated\python_variable_methods.cpp:836.)
     out = float(sobolev_loss(backend, model_fn, x, grad_fn, order=1, weight=1.0))
 
 tests/test_trainer.py::TestTrainerCompile::test_compile_true_trains_and_composite_becomes_compiled
-  D:\desktop2\public-impact\python-packages\physai-library\src\physai\trainer.py:1047: UserWarning: Trainer(compile=True): the first compiled call failed in this environment (GPUTooOldForTriton: Found Quadro P620 which is too old to be supported by the triton GPU compiler, which is used as the backend. Triton only supports devices of CUDA Capability >= 7.0, but your device is of CUDA capability 6.1
+  [Undisclosable Root DIR]\src\physai\trainer.py:1047: UserWarning: Trainer(compile=True): the first compiled call failed in this environment (GPUTooOldForTriton: Found Quadro P620 which is too old to be supported by the triton GPU compiler, which is used as the backend. Triton only supports devices of CUDA Capability >= 7.0, but your device is of CUDA capability 6.1
   
   Set TORCHDYNAMO_VERBOSE=1 for the internal stack trace (please do this especially if you're reporting a bug to PyTorch). For even more developer context, set TORCH_LOGS="+dynamo"
   ). Falling back to eager execution for the rest of training instead of crashing. Set compile=False to skip this attempt entirely next time.
@@ -753,10 +753,10 @@ Enter 1, 2, or 3: 1
 
 54/54 checks passed.
 
-PS D:\desktop2\public-impact\python-packages\physai-library> pytest .\tests --ignore=.\tests\test_pde_everything.py
+PS [Undisclosable Root DIR]> pytest .\tests --ignore=.\tests\test_pde_everything.py
 ================================================= test session starts =================================================
 platform win32 -- Python 3.13.3, pytest-8.4.2, pluggy-1.6.0
-rootdir: D:\desktop2\public-impact\python-packages\physai-library
+rootdir: [Undisclosable Root DIR]
 configfile: pyproject.toml
 plugins: anyio-4.9.0, langsmith-0.3.42, cov-7.1.0, instafail-0.5.0
 collected 669 items                                                                                                    
@@ -855,16 +855,16 @@ tests/test-trainer-backend/tf_train_test.py::TestTrainerTensorFlow::test_lbfgs_p
     distutils.version.LooseVersion(required_tensorflow_version)):
 
 tests/test-trainer-backend/tf_train_test.py::TestTrainerTensorFlow::test_lbfgs_phase_tf_runs_to_completion_or_falls_back
-  D:\desktop2\public-impact\python-packages\physai-library\src\physai\trainer.py:1368: UserWarning: tensorflow_probability is required for TensorFlow L-BFGS (install via 'pip install physai[tensorflow]'). Falling back to low-LR fine-tuninginstead of true L-BFGS.
+  [Undisclosable Root DIR]\src\physai\trainer.py:1368: UserWarning: tensorflow_probability is required for TensorFlow L-BFGS (install via 'pip install physai[tensorflow]'). Falling back to low-LR fine-tuninginstead of true L-BFGS.
     warnings.warn(
 
 tests/test_losses.py::TestRegularisationLosses::test_sobolev_loss_positive_for_nonconstant_function
-  D:\desktop2\public-impact\python-packages\physai-library\tests\test_losses.py:233: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+  [Undisclosable Root DIR]\tests\test_losses.py:233: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
   Consider using tensor.detach() first. (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\pytorch\torch\csrc\autograd\generated\python_variable_methods.cpp:836.)
     out = float(sobolev_loss(backend, model_fn, x, grad_fn, order=1, weight=1.0))
 
 tests/test_trainer.py::TestTrainerCompile::test_compile_true_trains_and_composite_becomes_compiled
-  D:\desktop2\public-impact\python-packages\physai-library\src\physai\trainer.py:1078: UserWarning: Trainer(compile=True): the first compiled call failed in this environment (InductorError: RuntimeError: Compiler: cl is not found.
+  [Undisclosable Root DIR]\src\physai\trainer.py:1078: UserWarning: Trainer(compile=True): the first compiled call failed in this environment (InductorError: RuntimeError: Compiler: cl is not found.
   
   Set TORCHDYNAMO_VERBOSE=1 for the internal stack trace (please do this especially if you're reporting a bug to PyTorch). For even more developer context, set TORCH_LOGS="+dynamo"
   ). Falling back to eager execution for the rest of training instead of crashing. Set compile=False to skip this attempt entirely next time.
@@ -875,7 +875,7 @@ tests/test_trainer.py::TestTrainerCompile::test_compile_true_trains_and_composit
 
 ==================================================================== test session starts =====================================================================
 platform win32 -- Python 3.13.3, pytest-8.4.2, pluggy-1.6.0
-rootdir: D:\desktop2\public-impact\python-packages\physai-library
+rootdir: [Undisclosable Root DIR]
 configfile: pyproject.toml
 plugins: anyio-4.9.0, langsmith-0.3.42, cov-7.1.0, instafail-0.5.0
 collected 775 items                                                                                                                                           
@@ -975,23 +975,23 @@ tests/test-trainer-backend/tf_train_test.py::TestTrainerTensorFlow::test_lbfgs_p
     distutils.version.LooseVersion(required_tensorflow_version)):
 
 tests/test-trainer-backend/tf_train_test.py::TestTrainerTensorFlow::test_lbfgs_phase_tf_runs_to_completion_or_falls_back
-  D:\desktop2\public-impact\python-packages\physai-library\src\physai\trainer.py:1368: UserWarning: tensorflow_probability is required for TensorFlow L-BFGS (install via 'pip install physai[tensorflow]'). Falling back to low-LR fine-tuning instead of true L-BFGS.
+  [Undisclosable Root DIR]\src\physai\trainer.py:1368: UserWarning: tensorflow_probability is required for TensorFlow L-BFGS (install via 'pip install physai[tensorflow]'). Falling back to low-LR fine-tuning instead of true L-BFGS.
     warnings.warn(
 
 tests/test_losses.py::TestRegularisationLosses::test_sobolev_loss_positive_for_nonconstant_function
-  D:\desktop2\public-impact\python-packages\physai-library\tests\test_losses.py:233: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+  [Undisclosable Root DIR]\tests\test_losses.py:233: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
   Consider using tensor.detach() first. (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\pytorch\torch\csrc\autograd\generated\python_variable_methods.cpp:836.)
     out = float(sobolev_loss(backend, model_fn, x, grad_fn, order=1, weight=1.0))
 
 tests/test_trainer.py::TestTrainerCompile::test_compile_true_trains_and_composite_becomes_compiled
-  D:\desktop2\public-impact\python-packages\physai-library\src\physai\trainer.py:1078: UserWarning: Trainer(compile=True): the first compiled call failed in this environment (InductorError: RuntimeError: Compiler: cl is not found.
+  [Undisclosable Root DIR]\src\physai\trainer.py:1078: UserWarning: Trainer(compile=True): the first compiled call failed in this environment (InductorError: RuntimeError: Compiler: cl is not found.
   
   Set TORCHDYNAMO_VERBOSE=1 for the internal stack trace (please do this especially if you're reporting a bug to PyTorch). For even more developer context, set TORCH_LOGS="+dynamo"
   ). Falling back to eager execution for the rest of training instead of crashing. Set compile=False to skip this attempt entirely next time.
     total, breakdown = self._get_composite_fn()()
 
 tests/test_utils_and_viz.py::test_plot_isosurface_3d_matplotlib_fallback
-  D:\desktop2\public-impact\python-packages\physai-library\src\physai\visualization_nd.py:537: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
+  [Undisclosable Root DIR]\src\physai\visualization_nd.py:537: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed in 3.11. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap()`` or ``pyplot.get_cmap()`` instead.
     colors = plt.cm.get_cmap(colorscale if colorscale in plt.colormaps() else "RdBu_r")(norm(small))
 
 tests/test_utils_and_viz.py::test_animate_nd_field_2d_slice_mode
@@ -1035,3 +1035,15 @@ src\physai\visualization_nd.py                303     47    84%
 ---------------------------------------------------------------
 TOTAL                                        6650   1022    85%
 ================================================== 770 passed, 5 skipped, 100 warnings in 143.49s (0:02:23) ==================================================
+
+pytest tests/test_pde_register.py
+============================================================================= test session starts ==============================================================================
+platform win32 -- Python 3.13.3, pytest-8.4.2, pluggy-1.6.0
+rootdir: [Undisclosable Root DIR]
+configfile: pyproject.toml
+plugins: anyio-4.9.0, langsmith-0.3.42, cov-7.1.0, instafail-0.5.0
+collected 31 items                                                                                                                                                              
+
+tests\test_pde_register.py ...............................                                                                                                                [100%]
+
+============================================================================= 31 passed in 16.27s ==============================================================================

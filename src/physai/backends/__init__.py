@@ -39,7 +39,7 @@ def get_backend(name: str, *, cache: bool = True, **kwargs: Any) -> AbstractBack
 
     Parameters
     ----------
-    name   : "torch" | "pytorch" | "jax" | "tensorflow" | "tf"
+    name   : "torch" | "pytorch" | "jax" | "tensorflow" | "tf" | "paddle" | "paddlepaddle"
     cache  : If True (default), return the same instance for identical kwargs.
     **kwargs: Passed directly to the backend constructor.
 

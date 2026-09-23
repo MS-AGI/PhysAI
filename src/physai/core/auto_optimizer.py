@@ -29,8 +29,9 @@ Heuristics implemented
 from __future__ import annotations
 
 import math
+import threading
 import warnings
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field, asdict, replace
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import jax
@@ -54,7 +55,7 @@ class PDEMeta:
     n_components:   int     # number of coupled output fields
     stiff:          bool    # known to be stiff (small ε, large wave numbers)
     spectral_bias:  str     # "low" | "mixed" | "high"  – expected frequency content
-    recommended_arch: str   # "pinn" | "fno" | "both"
+    recommended_arch: str   # "pinn" | "fno" | "spectral_element" | "both"
 
 _PDE_META: Dict[str, PDEMeta] = {
     # =========================================================================
@@ -181,6 +182,83 @@ _PDE_META: Dict[str, PDEMeta] = {
 
 
 # ---------------------------------------------------------------------------
+# Public metadata-registry API (used by ``register_pde`` in pde_residual.py)
+# ---------------------------------------------------------------------------
+
+_PDE_META_LOCK = threading.RLock()
+_VALID_SPECTRAL_BIAS = ("low", "mixed", "high")
+_VALID_RECOMMENDED_ARCH = ("pinn", "fno", "spectral_element", "both")
+
+#: Field defaults used when a user-registered PDE supplies only part of its
+#: metadata (same values as the generic fallback in ``AutoOptimizer``).
+PDE_META_DEFAULTS: Dict[str, Any] = dict(
+    order=2, nonlinear=False, n_components=1, stiff=False,
+    spectral_bias="mixed", recommended_arch="pinn",
+)
+
+
+def _validate_pde_meta(meta: "PDEMeta") -> None:
+    """Raise ``TypeError`` / ``ValueError`` if ``meta`` is not usable."""
+    if not isinstance(meta, PDEMeta):
+        raise TypeError(f"meta must be a PDEMeta, got {type(meta).__name__}.")
+    if not isinstance(meta.name, str) or not meta.name.strip():
+        raise ValueError("PDEMeta.name must be a non-empty string.")
+    for fld in ("order", "n_components"):
+        v = getattr(meta, fld)
+        if isinstance(v, bool) or not isinstance(v, int) or v < 1:
+            raise ValueError(f"PDEMeta.{fld} must be an int >= 1, got {v!r}.")
+    for fld in ("nonlinear", "stiff"):
+        v = getattr(meta, fld)
+        if not isinstance(v, bool):
+            raise TypeError(f"PDEMeta.{fld} must be a bool, got {v!r}.")
+    if meta.spectral_bias not in _VALID_SPECTRAL_BIAS:
+        raise ValueError(
+            f"PDEMeta.spectral_bias must be one of {_VALID_SPECTRAL_BIAS}, "
+            f"got {meta.spectral_bias!r}."
+        )
+    if meta.recommended_arch not in _VALID_RECOMMENDED_ARCH:
+        raise ValueError(
+            f"PDEMeta.recommended_arch must be one of "
+            f"{_VALID_RECOMMENDED_ARCH}, got {meta.recommended_arch!r}."
+        )
+
+
+def get_pde_meta(name: str) -> Optional["PDEMeta"]:
+    """Return the registered ``PDEMeta`` for ``name`` (case-insensitive), or None."""
+    return _PDE_META.get(str(name).strip().lower())
+
+
+def register_pde_meta(meta: "PDEMeta", *, overwrite: bool = False) -> "PDEMeta":
+    """Validate ``meta`` and store it under ``meta.name`` (lower-cased).
+
+    Raises ``ValueError`` if the name already has metadata and
+    ``overwrite`` is False. Returns the stored (normalised) ``PDEMeta``.
+    """
+    _validate_pde_meta(meta)
+    key = meta.name.strip().lower()
+    if key != meta.name:
+        meta = replace(meta, name=key)
+    with _PDE_META_LOCK:
+        if key in _PDE_META and not overwrite:
+            raise ValueError(
+                f"PDE metadata for '{key}' already exists; pass overwrite=True."
+            )
+        _PDE_META[key] = meta
+    return meta
+
+
+def unregister_pde_meta(name: str, *, missing_ok: bool = True) -> None:
+    """Remove the metadata for ``name``. Does not touch ``PDE_REGISTRY``."""
+    key = str(name).strip().lower()
+    with _PDE_META_LOCK:
+        if key not in _PDE_META:
+            if missing_ok:
+                return
+            raise KeyError(f"No PDE metadata registered for '{key}'.")
+        del _PDE_META[key]
+
+
+# ---------------------------------------------------------------------------
 # Problem specification (user-facing)
 # ---------------------------------------------------------------------------
 
@@ -245,7 +323,7 @@ class ProblemSpec:
     domain         : DomainSpec
     n_collocation  : override for number of collocation points (None → auto)
     n_bc_points    : override for number of boundary points   (None → auto)
-    model_arch     : "pinn" | "fno" | "auto"
+    model_arch     : "pinn" | "fno" | "spectral_element" | "auto"
     backend_name   : "torch" | "jax" | "tensorflow"
     target_loss    : training convergence threshold
     max_epochs     : hard stop
@@ -444,7 +522,16 @@ def _select_model_arch(
     backend: AbstractBackend,
 ) -> str:
     if spec.model_arch != "auto":
-        return spec.model_arch.lower()
+        requested = spec.model_arch.lower()
+        supported = {"pinn", "fno", "spectral_element"}
+        if requested not in supported:
+            raise ValueError(
+                f"model_arch must be 'auto' or one of {sorted(supported)}, "
+                f"got {spec.model_arch!r}."
+            )
+        if requested == "spectral_element" and spec.domain.time_domain is None:
+            raise ValueError("model_arch='spectral_element' requires a time-dependent domain.")
+        return requested
 
     # Prefer FNO for high-frequency, nonlinear, or time-dependent problems
     if meta.recommended_arch == "fno":
@@ -682,7 +769,8 @@ class AutoOptimizer:
         if pde_key not in _PDE_META:
             warnings.warn(
                 f"PDE '{spec.pde_name}' not in metadata registry. "
-                "Using generic defaults.",
+                "Using generic defaults. Use physai.register_pde(name, cls, "
+                "meta=...) to register a custom PDE with its own metadata.",
                 UserWarning,
             )
             meta = PDEMeta(
@@ -770,6 +858,7 @@ class AutoOptimizer:
         model_fn: Callable,
         current_points: "Tensor",
         backend: AbstractBackend,
+        residual: Optional[Callable] = None,
     ) -> "Tensor":
         """
         Residual-Adaptive Refinement (RAR):
@@ -783,12 +872,17 @@ class AutoOptimizer:
         model_fn       : callable u(x) → u
         current_points : existing collocation point set
         backend        : active backend
+        residual       : optional residual callable ``(model_fn, pts) -> r``
+                         (typically the Trainer's own residual instance).
+                         Used only when ``config.problem.pde_name`` is not
+                         in ``PDE_REGISTRY``; registered names keep being
+                         built via ``build_residual`` exactly as before.
 
         Returns
         -------
         Updated collocation points tensor
         """
-        from physai.core.pde_residual import build_residual
+        from physai.core.pde_residual import PDE_REGISTRY, build_residual
 
         domain   = config.problem.domain
         n        = config.training.n_collocation
@@ -800,11 +894,17 @@ class AutoOptimizer:
         # Sample candidate pool uniformly, respecting the configured precision
         candidates = _uniform_sample(backend, domain, n_pool, dtype=config.training.dtype)
 
-        res_fn = build_residual(
-            config.problem.pde_name,
-            backend,
-            **config.problem.extra_params,
-        )
+        if (
+            residual is not None
+            and config.problem.pde_name.strip().lower() not in PDE_REGISTRY
+        ):
+            res_fn = residual
+        else:
+            res_fn = build_residual(
+                config.problem.pde_name,
+                backend,
+                **config.problem.extra_params,
+            )
 
         def _residual_mag(pts: "Tensor") -> "Tensor":
             r = res_fn(model_fn, pts)
@@ -959,4 +1059,8 @@ __all__ = [
     "TrainingConfig",
     "SchedulerConfig",
     "AutoOptimizer",
+    "PDE_META_DEFAULTS",
+    "get_pde_meta",
+    "register_pde_meta",
+    "unregister_pde_meta",
 ]

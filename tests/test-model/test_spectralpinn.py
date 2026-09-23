@@ -129,17 +129,16 @@ class TestDynamicLossBalancer:
 class TestChebyshevHelpers:
     def test_gauss_lobatto_endpoints_are_plus_minus_one(self):
         nodes = _chebyshev_gauss_lobatto_nodes(9)
-        assert torch.isclose(nodes[0], torch.tensor(1.0, dtype=nodes.dtype))
-        assert torch.isclose(nodes[-1], torch.tensor(-1.0, dtype=nodes.dtype))
+        np.testing.assert_allclose(nodes[[0, -1]], [1.0, -1.0])
 
     def test_vandermonde_matches_known_chebyshev_polynomials(self):
-        x = torch.linspace(-1.0, 1.0, 11, dtype=torch.float64)
+        x = np.linspace(-1.0, 1.0, 11, dtype=np.float64)
         V = _chebyshev_vandermonde(x, n_modes=4)
         # T_0=1, T_1=x, T_2=2x^2-1, T_3=4x^3-3x
-        np.testing.assert_allclose(V[:, 0].numpy(), np.ones(11), atol=1e-10)
-        np.testing.assert_allclose(V[:, 1].numpy(), x.numpy(), atol=1e-10)
-        np.testing.assert_allclose(V[:, 2].numpy(), (2 * x ** 2 - 1).numpy(), atol=1e-10)
-        np.testing.assert_allclose(V[:, 3].numpy(), (4 * x ** 3 - 3 * x).numpy(), atol=1e-10)
+        np.testing.assert_allclose(V[:, 0], np.ones(11), atol=1e-10)
+        np.testing.assert_allclose(V[:, 1], x, atol=1e-10)
+        np.testing.assert_allclose(V[:, 2], 2 * x ** 2 - 1, atol=1e-10)
+        np.testing.assert_allclose(V[:, 3], 4 * x ** 3 - 3 * x, atol=1e-10)
 
     def test_deriv_boundary_vectors_match_analytic_formula(self):
         n_modes = 5
@@ -147,38 +146,38 @@ class TestChebyshevHelpers:
         i = np.arange(n_modes)
         expected_right = i ** 2
         expected_left = ((-1.0) ** (i + 1)) * (i ** 2)
-        np.testing.assert_allclose(right.numpy(), expected_right)
-        np.testing.assert_allclose(left.numpy(), expected_left)
+        np.testing.assert_allclose(right, expected_right)
+        np.testing.assert_allclose(left, expected_left)
 
     def test_coefficient_derivative_matrix_matches_numpy_chebder(self):
         """Verified the same way the module's own docstring says it was
         verified: against numpy.polynomial.chebyshev.chebder for every
         basis vector T_0..T_{n-1}."""
         n_modes = 6
-        D = _chebyshev_coefficient_derivative_matrix(n_modes, dtype=torch.float64)
+        D = _chebyshev_coefficient_derivative_matrix(n_modes, dtype=np.float64)
         for k in range(n_modes):
             coeffs = np.zeros(n_modes)
             coeffs[k] = 1.0
             expected = np.polynomial.chebyshev.chebder(coeffs, m=1)
-            got = D[:, k].numpy()[: len(expected)]
+            got = D[:, k][: len(expected)]
             np.testing.assert_allclose(got, expected, atol=1e-10)
             # Anything beyond len(expected) must be zero (chebder drops the
             # trailing zero coefficient that would appear past the reduced degree).
-            np.testing.assert_allclose(D[:, k].numpy()[len(expected):], 0.0, atol=1e-10)
+            np.testing.assert_allclose(D[:, k][len(expected):], 0.0, atol=1e-10)
 
     def test_derivative_of_x_is_one(self):
         """D @ e_1 == e_0  (d/dx[x] = 1), as the docstring claims."""
-        D = _chebyshev_coefficient_derivative_matrix(4, dtype=torch.float64)
-        e1 = torch.tensor([0.0, 1.0, 0.0, 0.0], dtype=torch.float64)
+        D = _chebyshev_coefficient_derivative_matrix(4, dtype=np.float64)
+        e1 = np.array([0.0, 1.0, 0.0, 0.0], dtype=np.float64)
         result = D @ e1
-        np.testing.assert_allclose(result.numpy(), [1.0, 0.0, 0.0, 0.0], atol=1e-10)
+        np.testing.assert_allclose(result, [1.0, 0.0, 0.0, 0.0], atol=1e-10)
 
     def test_derivative_of_T2_is_4T1(self):
         """D @ e_2 == 4*e_1  (d/dx[2x^2-1] = 4x), as the docstring claims."""
-        D = _chebyshev_coefficient_derivative_matrix(4, dtype=torch.float64)
-        e2 = torch.tensor([0.0, 0.0, 1.0, 0.0], dtype=torch.float64)
+        D = _chebyshev_coefficient_derivative_matrix(4, dtype=np.float64)
+        e2 = np.array([0.0, 0.0, 1.0, 0.0], dtype=np.float64)
         result = D @ e2
-        np.testing.assert_allclose(result.numpy(), [0.0, 4.0, 0.0, 0.0], atol=1e-10)
+        np.testing.assert_allclose(result, [0.0, 4.0, 0.0, 0.0], atol=1e-10)
 
 
 # ---------------------------------------------------------------------------
@@ -214,8 +213,8 @@ class TestBuildSeparableLinearOperator:
             n_elements=1, dims=1, n_modes=n_modes, dim_coeffs=[{1: 1.0}],
             element_widths=torch.tensor([2.0]),
         )
-        D = _chebyshev_coefficient_derivative_matrix(n_modes, dtype=torch.float32)
-        np.testing.assert_allclose(ops[0, 0].numpy(), D.numpy(), atol=1e-5)
+        D = _chebyshev_coefficient_derivative_matrix(n_modes, dtype=np.float32)
+        np.testing.assert_allclose(ops[0, 0], D, atol=1e-5)
 
     def test_default_width_applies_chain_rule_factor_of_two(self):
         """The default element_widths=1 still applies the reference-domain
@@ -225,8 +224,8 @@ class TestBuildSeparableLinearOperator:
         ops = build_separable_linear_operator(
             n_elements=1, dims=1, n_modes=n_modes, dim_coeffs=[{1: 1.0}],
         )
-        D = _chebyshev_coefficient_derivative_matrix(n_modes, dtype=torch.float32)
-        np.testing.assert_allclose(ops[0, 0].numpy(), 2.0 * D.numpy(), atol=1e-5)
+        D = _chebyshev_coefficient_derivative_matrix(n_modes, dtype=np.float32)
+        np.testing.assert_allclose(ops[0, 0], 2.0 * D, atol=1e-5)
 
     def test_width_scaling_applies_chain_rule(self):
         """Halving the element width doubles a first-derivative operator
@@ -240,14 +239,14 @@ class TestBuildSeparableLinearOperator:
             n_elements=1, dims=1, n_modes=n_modes, dim_coeffs=[{1: 1.0}],
             element_widths=torch.tensor([0.5]),
         )
-        np.testing.assert_allclose(ops_w_half[0, 0].numpy(), 2.0 * ops_w1[0, 0].numpy(), atol=1e-5)
+        np.testing.assert_allclose(ops_w_half[0, 0], 2.0 * ops_w1[0, 0], atol=1e-5)
 
     def test_zeroth_order_reaction_term_is_identity_scaled(self):
         n_modes = 3
         ops = build_separable_linear_operator(
             n_elements=1, dims=1, n_modes=n_modes, dim_coeffs=[{0: 3.0}],
         )
-        np.testing.assert_allclose(ops[0, 0].numpy(), 3.0 * np.eye(n_modes), atol=1e-5)
+        np.testing.assert_allclose(ops[0, 0], 3.0 * np.eye(n_modes), atol=1e-5)
 
     def test_invalid_negative_order_raises(self):
         with pytest.raises(ValueError):
@@ -331,6 +330,23 @@ class TestUSENOCPModule:
         params = list(module.parameters())
         network_params = list(module.network.parameters())
         assert len(params) == len(network_params)
+
+    def test_evaluate_reconstructs_constant_field_across_elements(self):
+        module = _make_module(n_elements=2, dims=1, n_modes=4, rank=1)
+        times = torch.tensor([[0.0], [0.5], [1.0]])
+        coords = torch.tensor([[-1.0], [0.0], [1.0]])
+        constant_factors = [
+            [torch.tensor([[[1.0, 0.0, 0.0, 0.0]]] * 3)],
+            [torch.tensor([[[1.0, 0.0, 0.0, 0.0]]] * 3)],
+        ]
+        module.get_cp_factors = lambda _t: constant_factors
+        result = module.evaluate(times, coords, [(-1.0, 1.0)])
+        torch.testing.assert_close(result, torch.ones((3, 1)))
+
+    def test_model_parameters_keep_torch_module_iterator_contract(self):
+        module = _make_module()
+        assert isinstance(next(module.parameters()), torch.nn.Parameter)
+        assert next(module.named_parameters())[0].startswith("network.")
 
 
 # ---------------------------------------------------------------------------

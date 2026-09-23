@@ -1,21 +1,21 @@
 """
-physai/dedalus_setup.py
+physai/solver_setup.py
 
-First-run detection/consent gate for the optional Dedalus spectral-solver
-backend.
+First-run detection/consent gate for the optional classical solver stack.
 
-Dedalus (https://dedalus-project.org) is not a normal pip-installable
-dependency — it needs a Conda environment (and typically MPI/FFTW built
-against it), so it can't just live in `install_requires`. PhysAI ships a
+The optional native solver adapters in `physai.solvers.solver` use packages
+with compiled MPI, PETSc, or electromagnetic dependencies. PhysAI ships a
 polyglot Windows/.cmd + Linux/macOS bash installer at
-`physai/installer/installer.cmd` that automates the Conda setup.
+`physai/installer/installer.cmd` that prepares a Conda environment containing
+Dedalus, FiPy, classic FEniCS, FEniCSx, Meep, and CuPy.
 
 This module decides *when it's okay to even mention that*, and never runs
 anything on the user's system without their explicit, per-run consent:
 
-  * On `import physai`, `notify_dedalus_status()` is called. It's a plain
-    print — no prompts, no subprocess calls, no side effects on disk beyond
-    the same `~/.physai/config.json` used by `chat_setup.py`.
+  * On `import physai`, `notify_solver_status()` checks optional imports and
+    may show a notice and one-time consent prompt in an interactive terminal.
+    It never launches the installer without an explicit yes. The choice is
+    stored in the same `~/.physai/config.json` used by `chat_setup.py`.
   * In a non-interactive context (CI, containers, headless servers, piped
     stdin, known bot/automation env vars) it either says nothing or prints
     one informational line — it NEVER prompts and NEVER launches the
@@ -26,21 +26,22 @@ anything on the user's system without their explicit, per-run consent:
   * In an interactive terminal, it prints the same notice plus a one-time
     y/n prompt offering to launch the bundled installer right now. The
     answer (yes, no, or "don't ask again") is cached, same as chat consent.
-  * `physai.install_dedalus()` is also exposed for anyone who wants to
+  * `physai.install_solver_dependencies()` is also exposed for anyone who wants to
     trigger the installer explicitly and skip the notice/prompt entirely.
 
 Usage
 -----
-    from physai.dedalus_setup import notify_dedalus_status, install_dedalus
+    from physai.solver_setup import notify_solver_status, install_solver_dependencies
 
-    notify_dedalus_status()   # called automatically from physai/__init__.py
-    install_dedalus()         # explicit, user-invoked
+    notify_solver_status()   # called automatically from physai/__init__.py
+    install_solver_dependencies()  # explicit, user-invoked
 
 Silencing
 ---------
-    physai.set_dedalus_notice_enabled(False)   # persists the choice
+    physai.set_solver_notice_enabled(False)   # persists the choice
     # or:
-    PHYSAI_NO_DEDALUS_NOTICE=1   python train.py
+    PHYSAI_NO_SOLVER_NOTICE=1    python train.py
+    PHYSAI_NO_DEDALUS_NOTICE=1  python train.py  # legacy alias
     PHYSAI_NO_PROMPT=1           python train.py   # (shared w/ chat_setup)
 """
 from __future__ import annotations
@@ -61,7 +62,7 @@ from typing import Optional
 _CONFIG_DIR = Path(os.environ.get("PHYSAI_HOME", Path.home() / ".physai"))
 _CONFIG_PATH = _CONFIG_DIR / "config.json"
 
-_NOTICE_ENV = "PHYSAI_NO_DEDALUS_NOTICE"   # any truthy value silences the notice entirely
+_NOTICE_ENV = "PHYSAI_NO_SOLVER_NOTICE"   # legacy PHYSAI_NO_DEDALUS_NOTICE also works
 _NO_PROMPT_ENV = "PHYSAI_NO_PROMPT"        # shared with chat_setup.py
 
 _INSTALLER_PATH = Path(__file__).parent / "installer" / "installer.cmd"
@@ -84,16 +85,19 @@ def _save_config(cfg: dict) -> None:
         pass  # non-fatal — worst case we re-notify next run
 
 
-def set_dedalus_notice_enabled(enabled: bool) -> None:
-    """Persist whether the import-time Dedalus notice should show at all."""
+def set_solver_notice_enabled(enabled: bool) -> None:
+    """Persist whether the import-time optional solver notice should show."""
     cfg = _load_config()
-    cfg["dedalus_notice_enabled"] = bool(enabled)
+    cfg["solver_notice_enabled"] = bool(enabled)
+    cfg["dedalus_notice_enabled"] = bool(enabled)  # migrate the prior setting
     _save_config(cfg)
 
 
-def reset_dedalus_notice() -> None:
+def reset_solver_notice() -> None:
     """Forget the stored answer so the notice/prompt can appear again."""
     cfg = _load_config()
+    cfg.pop("solver_notice_enabled", None)
+    cfg.pop("solver_notice_seen_at", None)
     cfg.pop("dedalus_notice_enabled", None)
     cfg.pop("dedalus_notice_seen_at", None)
     _save_config(cfg)
@@ -153,52 +157,74 @@ def is_noninteractive_environment() -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Dedalus detection
+# Optional solver dependency detection
 # ---------------------------------------------------------------------------
 
+_SOLVER_IMPORTS = {
+    "Dedalus": "dedalus",
+    "FiPy": "fipy",
+    "classic FEniCS": "dolfin",
+    "FEniCSx": "dolfinx",
+    "Meep": "meep",
+    "CuPy": "cupy",
+}
+
+
 def is_dedalus_installed() -> bool:
+    """Return whether Dedalus is importable in the current Python environment."""
     import importlib.util
 
     return importlib.util.find_spec("dedalus") is not None
+
+
+def missing_solver_dependencies() -> list[str]:
+    """List optional solver packages missing from the current Python environment."""
+    import importlib.util
+
+    return [
+        label for label, module in _SOLVER_IMPORTS.items()
+        if importlib.util.find_spec(module) is None
+    ]
 
 
 # ---------------------------------------------------------------------------
 # The notice / consent flow (called from physai/__init__.py)
 # ---------------------------------------------------------------------------
 
-def notify_dedalus_status(*, quiet: bool = False) -> None:
+def notify_solver_status(*, quiet: bool = False) -> None:
     """
     Import-time entry point. Never raises, never blocks in a
     non-interactive context, never launches the installer on its own.
 
     Behavior:
-      * Dedalus already installed              -> do nothing.
+      * All optional solver packages installed -> do nothing.
       * Notice previously silenced by the user  -> do nothing.
       * Non-interactive environment              -> at most one quiet
         informational line (skipped entirely if `quiet=True` or
-        PHYSAI_NO_DEDALUS_NOTICE is set); never prompts.
+        PHYSAI_NO_SOLVER_NOTICE (or its legacy Dedalus alias) is set); never prompts.
       * Interactive terminal, notice not yet
         answered                                 -> print the notice and
         offer a one-time y/n prompt to launch the bundled installer.
     """
     try:
-        if is_dedalus_installed():
+        missing = missing_solver_dependencies()
+        if not missing:
             return
 
-        if _env_bool(_NOTICE_ENV):
+        if _env_bool(_NOTICE_ENV) or _env_bool("PHYSAI_NO_DEDALUS_NOTICE"):
             return
 
         cfg = _load_config()
-        if cfg.get("dedalus_notice_enabled") is False:
+        if cfg.get("solver_notice_enabled", cfg.get("dedalus_notice_enabled")) is False:
             return
 
         if is_noninteractive_environment():
             if not quiet:
                 print(
-                    "[PhysAI] Optional 'dedalus' backend not found (used for "
-                    "spectral cross-validation). Skipping setup prompt in "
+                    "[PhysAI] Some optional classical solver packages are not "
+                    f"installed ({', '.join(missing)}). Skipping setup prompt in "
                     "this non-interactive environment. Install it later "
-                    f"with the bundled installer, or set {_NOTICE_ENV}=1 "
+                    f"with the bundled Conda installer, or set {_NOTICE_ENV}=1 "
                     "to stop seeing this message.",
                     file=sys.stderr,
                 )
@@ -210,7 +236,7 @@ def notify_dedalus_status(*, quiet: bool = False) -> None:
         # first notify() call per run via the seen-at timestamp check below
         # being process-local is unnecessary; config persists across runs
         # instead, matching chat_setup.py's cadence).
-        if cfg.get("dedalus_notice_enabled") is None:
+        if cfg.get("solver_notice_enabled", cfg.get("dedalus_notice_enabled")) is None:
             _prompt_interactively()
     except Exception:
         # This function must never be able to crash `import physai`.
@@ -219,33 +245,32 @@ def notify_dedalus_status(*, quiet: bool = False) -> None:
 
 def _prompt_interactively() -> None:
     cfg = _load_config()
-    cfg["dedalus_notice_seen_at"] = time.time()
+    cfg["solver_notice_seen_at"] = time.time()
     _save_config(cfg)
 
     print(
-        "\n[PhysAI] Optional Dedalus backend not detected.\n"
-        "    Dedalus adds a real spectral PDE solver, used for classical\n"
-        "    cross-validation of your trained models (Trainer.cross_validate_dedalus).\n"
-        "    It needs a Conda environment, so it isn't a normal pip dependency —\n"
-        "    PhysAI ships a guided installer that sets one up for you.\n"
+        "\n[PhysAI] Optional classical solver packages are missing.\n"
+        "    PhysAI has adapters for Dedalus, FiPy, FEniCS, FEniCSx, Meep, and CuPy.\n"
+        "    Their native dependencies are installed through Conda. The bundled\n"
+        "    installer creates a separate 'physai-solvers' environment.\n"
     )
 
     try:
         ans = input(
-            "Run the Dedalus installer now? [y/n] (won't ask again either way): "
+            "Install the optional solver stack now? [y/n] (won't ask again either way): "
         ).strip().lower()
     except (EOFError, KeyboardInterrupt):
         print("\n[PhysAI] No input received — skipping for now.")
         return
 
     if ans in ("y", "yes"):
-        set_dedalus_notice_enabled(False)  # don't keep asking on future imports
-        install_dedalus(confirm=False)
+        set_solver_notice_enabled(False)  # don't keep asking on future imports
+        install_solver_dependencies(confirm=False)
     elif ans in ("n", "no"):
-        set_dedalus_notice_enabled(False)
+        set_solver_notice_enabled(False)
         print(
             "[PhysAI] Skipped. Run it anytime with "
-            "`python -m physai.dedalus_setup` or `physai.install_dedalus()`.\n"
+            "`python -m physai.solver_setup` or `physai.install_solver_dependencies()`.\n"
         )
     else:
         print("[PhysAI] Unrecognized answer — skipping for now.\n")
@@ -255,13 +280,13 @@ def _prompt_interactively() -> None:
 # Explicit, user-invoked installer trigger
 # ---------------------------------------------------------------------------
 
-def install_dedalus(*, confirm: bool = True) -> int:
+def install_solver_dependencies(*, confirm: bool = True) -> int:
     """
-    Launch the bundled Dedalus installer script.
+    Launch the bundled Conda installer for the optional solver packages.
 
     This is the ONLY function in PhysAI that shells out to modify the
     system, and it only ever runs when a human calls it directly (or
-    answers "yes" to the interactive prompt in `notify_dedalus_status`,
+    answers "yes" to the interactive prompt in `notify_solver_status`,
     which calls this with `confirm=False` since the question was already
     asked once).
 
@@ -284,16 +309,16 @@ def install_dedalus(*, confirm: bool = True) -> int:
     if confirm:
         if is_noninteractive_environment():
             print(
-                "[PhysAI] Refusing to run the Dedalus installer without a "
+                "[PhysAI] Refusing to run the solver installer without a "
                 "human to confirm it (non-interactive environment detected). "
-                "Call physai.install_dedalus(confirm=False) if you really "
+                "Call physai.install_solver_dependencies(confirm=False) if you really "
                 "want to force it in a script/CI context."
             )
             return -1
         try:
             ans = input(
                 f"About to run {_INSTALLER_PATH} (may install Conda + a "
-                "'dedalus3' environment on this machine). Continue? [y/n]: "
+                "'physai-solvers' environment on this machine). Continue? [y/n]: "
             ).strip().lower()
         except (EOFError, KeyboardInterrupt):
             print("\n[PhysAI] Cancelled.")
@@ -325,14 +350,25 @@ def install_dedalus(*, confirm: bool = True) -> int:
 
 __all__ = [
     "is_dedalus_installed",
+    "missing_solver_dependencies",
     "is_noninteractive_environment",
-    "notify_dedalus_status",
-    "install_dedalus",
-    "set_dedalus_notice_enabled",
-    "reset_dedalus_notice",
+    "notify_solver_status",
+    "install_solver_dependencies",
+    "set_solver_notice_enabled",
+    "reset_solver_notice",
+]
+
+# Backward-compatible API aliases from the former Dedalus-only installer.
+notify_dedalus_status = notify_solver_status
+install_dedalus = install_solver_dependencies
+set_dedalus_notice_enabled = set_solver_notice_enabled
+reset_dedalus_notice = reset_solver_notice
+__all__ += [
+    "notify_dedalus_status", "install_dedalus",
+    "set_dedalus_notice_enabled", "reset_dedalus_notice",
 ]
 
 
 if __name__ == "__main__":
-    # `python -m physai.dedalus_setup` -> explicit, always-confirmed run.
-    sys.exit(install_dedalus(confirm=True))
+    # `python -m physai.solver_setup` -> explicit, always-confirmed run.
+    sys.exit(install_solver_dependencies(confirm=True))

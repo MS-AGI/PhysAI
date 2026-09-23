@@ -117,7 +117,7 @@ doi           = "https://doi.org/10.5281/zenodo.17214724"
 # Without the second, `src/physai/installer/installer.cmd` -- a non-.py
 # data file with no __init__.py, so it isn't a "package" setuptools'
 # auto-discovery would find on its own -- would be silently dropped from
-# the built wheel, breaking `physai.install_dedalus()` for anyone who
+# the built wheel, breaking `physai.install_solver_dependencies()` for anyone who
 # installed from PyPI rather than a source checkout.
 [tool.setuptools.packages.find]
 where = ["src"]

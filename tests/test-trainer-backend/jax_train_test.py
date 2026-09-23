@@ -89,6 +89,16 @@ class TestTrainerJAX:
         assert len(history.steps) == 5
         assert all(np.isfinite(v) for v in history.total_loss)
 
+    def test_train_initializes_jax_automatically(self, jax_backend):
+        trainer = _build_backend_trainer(jax_backend, max_epochs=1)
+        assert getattr(trainer, "_jax_params", None) is None
+
+        history = trainer.train()
+
+        assert trainer._jax_params is not None
+        assert len(history.steps) == 1
+        assert all(np.isfinite(v) for v in history.total_loss)
+
     def test_apply_lr_mutates_opt_state_hyperparams(self, jax_backend):
         trainer = _build_backend_trainer(jax_backend, max_epochs=1)
         dummy = jax_backend.tensor(np.zeros((1, 2), dtype=np.float32))

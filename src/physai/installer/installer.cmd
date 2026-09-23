@@ -3,14 +3,14 @@
 setlocal enabledelayedexpansion
 
 echo ==================================================
-echo Dedalus Environment Router ^& Installer
+echo PhysAI Solver Environment Router ^& Installer
 echo ==================================================
 
 :: 1. Check if WSL is installed and available
 where wsl.exe >nul 2>nul
 if %errorlevel% equ 0 (
     echo [!] Windows environment detected, but WSL is available.
-    echo Dedalus must run in a Linux environment.
+    echo The optional PhysAI solver stack must run in a Linux environment.
     set /p "run_wsl=Would you like to jump into WSL and continue automatically? (y/n): "
     if /i "!run_wsl!"=="y" (
         echo [*] Passing execution into your default WSL Linux distribution...
@@ -35,9 +35,9 @@ tasklist /FI "IMAGENAME eq Docker Desktop.exe" 2>nul | findstr /I "Docker Deskto
 if %errorlevel% equ 0 (
     echo.
     echo [!] Docker Desktop detected on your Windows host.
-    echo [!] Dedalus cannot be deployed directly on native Windows CMD/PowerShell.
+    echo [!] The solver stack cannot be deployed directly on native Windows CMD/PowerShell.
     echo Please start your container/VM manually, copy this file inside it, and
-    echo run it there with: bash install-dedalus.cmd
+    echo run it there with: bash installer.cmd
     echo.
     pause
     exit /b 1
@@ -46,7 +46,7 @@ if %errorlevel% equ 0 (
 :: 3. Pure Windows fallback
 echo.
 echo [!] System Compatibility Error:
-echo Dedalus is not natively supported on Windows.
+echo The complete optional solver stack is not supported in native Windows CMD.
 echo Please install the Windows Subsystem for Linux (WSL) to proceed.
 echo.
 echo To set up WSL, open PowerShell as Administrator and run:
@@ -60,14 +60,14 @@ exit /b 1
 
 #!/usr/bin/env bash
 #
-# Dedalus Installer for Linux / WSL / macOS
+# PhysAI Optional Solver Stack Installer for Linux / WSL / macOS
 # (the batch block above is only ever seen/run by Windows cmd.exe;
 #  bash treats it as a no-op heredoc and skips straight to here)
 #
 set -euo pipefail
 
 echo "=================================================="
-echo "      Dedalus Installer for Linux / WSL / macOS   "
+echo "   PhysAI Solver Stack Installer for Linux / WSL / macOS   "
 echo "=================================================="
 
 echo -e "\n[1/3] Checking for Conda installation..."
@@ -102,7 +102,7 @@ fi
 if [ -z "$CONDA_CMD" ]; then
     echo "[!] No active Conda environment (Anaconda/Miniconda/Mambaforge) detected."
     echo "--------------------------------------------------"
-    echo "Dedalus requires a Conda environment to proceed."
+    echo "The optional native solver packages require a Conda environment."
     echo "Please choose an option:"
     echo "  1) Automatically download and install Miniconda (lightweight, recommended)"
     echo "  2) Automatically download and install Anaconda (full data-science suite)"
@@ -114,7 +114,7 @@ if [ -z "$CONDA_CMD" ]; then
         case "$user_choice" in
             1) INSTALL_TYPE="miniconda"; break ;;
             2) INSTALL_TYPE="anaconda"; break ;;
-            3) echo "[-] Installation cancelled. Dedalus requires Conda to proceed."; exit 1 ;;
+            3) echo "[-] Installation cancelled. The solver stack requires Conda."; exit 1 ;;
             *) echo "[!] Invalid option. Please enter 1, 2, or 3." ;;
         esac
     done
@@ -188,21 +188,26 @@ else
     echo "[+] Conda detected: $CONDA_CMD"
 fi
 
-# User confirmation to deploy the Dedalus v3 environment
-echo -e "\n[2/3] Preparing to install Dedalus v3."
-echo "This will create a new conda environment named 'dedalus3'."
+# User confirmation to deploy the optional solver environment
+echo -e "\n[2/3] Preparing the PhysAI solver environment."
+echo "This creates a Conda environment named 'physai-solvers' with Python 3.11."
+echo "Packages: Dedalus, FiPy, classic FEniCS, FEniCSx, Meep, and CuPy."
 read -r -p "Do you want to proceed? (y/n): " proceed
 if [[ "$proceed" != "y" && "$proceed" != "Y" ]]; then
     echo "[!] Installation canceled by user."
     exit 0
 fi
 
-# Deploy Dedalus via conda-forge
-echo -e "\n[3/3] Installing Dedalus... this may take a few minutes."
-"$CONDA_CMD" create -n dedalus3 -c conda-forge dedalus python=3.11 -y
+# Install the optional solver stack from conda-forge. These compiled stacks
+# share MPI/PETSc dependencies, so let Conda resolve a compatible set.
+echo -e "\n[3/3] Installing the solver packages... this may take a while."
+"$CONDA_CMD" create -n physai-solvers -c conda-forge \
+    python=3.11 pip dedalus fipy fenics-dolfin fenics-dolfinx pymeep cupy -y
 
 echo -e "\n=================================================="
-echo "[+] Dedalus installed successfully!"
+echo "[+] The PhysAI solver environment was installed successfully!"
 echo "=================================================="
 echo "To start using it, open a new terminal window and run:"
-echo "    conda activate dedalus3"
+echo "    conda activate physai-solvers"
+echo "    python -m pip install physai"
+echo "Then run PhysAI from this environment to use the installed solver adapters."

@@ -335,7 +335,8 @@ class Trainer:
     config             : RuntimeConfig from AutoOptimizer (or built manually)
     model              : PINN or FNO instance
     residual           : PDEResidual instance (or any callable returning residual)
-    collocation_points : interior collocation points  [N_coll, d]
+    collocation_points : interior collocation points  [N_coll, d] (optional
+                         for grid-supervised FNO training)
     bc_points          : boundary condition points    [N_bc, d]  — simple
                          Dirichlet-only path, kept for backward
                          compatibility with box-shaped domains.
@@ -357,6 +358,12 @@ class Trainer:
     ic_values          : prescribed IC values         [N_ic, n_out]  (optional)
     data_points        : observation locations        [N_data, d]  (optional)
     data_values        : observation values           [N_data, n_out]  (optional)
+    grid_inputs        : FNO input fields              [N, C_in, *grid] (optional)
+    grid_targets       : FNO target fields             [N, C_out, *grid] (optional)
+                         Complete grids are batched as samples; grid points
+                         are never split across batches.
+    grid_val_inputs    : validation input fields       [N_val, C_in, *grid]
+    grid_val_targets   : validation target fields      [N_val, C_out, *grid]
     val_points         : validation points            (optional)
     val_values         : validation values            (optional)
     callbacks          : list of Callback instances
@@ -385,9 +392,9 @@ class Trainer:
         backend: AbstractBackend,
         config: RuntimeConfig,
         model: Any,
-        residual: Any,
+        residual: Any = None,
         *,
-        collocation_points: Tensor,
+        collocation_points: Optional[Tensor] = None,
         bc_points: Optional[Tensor] = None,
         bc_values: Optional[Tensor] = None,
         boundary_conditions: Optional[BoundaryConditionSet] = None,
@@ -396,6 +403,10 @@ class Trainer:
         ic_values: Optional[Tensor] = None,
         data_points: Optional[Tensor] = None,
         data_values: Optional[Tensor] = None,
+        grid_inputs: Optional[Tensor] = None,
+        grid_targets: Optional[Tensor] = None,
+        grid_val_inputs: Optional[Tensor] = None,
+        grid_val_targets: Optional[Tensor] = None,
         val_points: Optional[Tensor] = None,
         val_values: Optional[Tensor] = None,
         callbacks: Optional[List[Callback]] = None,
@@ -494,6 +505,62 @@ class Trainer:
         self._d_val  = data_values
         self._v_pts  = val_points
         self._v_val  = val_values
+        self._grid_x = grid_inputs
+        self._grid_y = grid_targets
+        self._grid_vx = grid_val_inputs
+        self._grid_vy = grid_val_targets
+
+        if (grid_inputs is None) != (grid_targets is None):
+            raise ValueError("Trainer: grid_inputs and grid_targets must be supplied together.")
+        if (grid_val_inputs is None) != (grid_val_targets is None):
+            raise ValueError("Trainer: grid_val_inputs and grid_val_targets must be supplied together.")
+        if grid_inputs is not None and (data_points is not None or data_values is not None):
+            raise ValueError(
+                "Trainer: use either pointwise data_points/data_values or "
+                "grid_inputs/grid_targets, not both."
+            )
+        if grid_inputs is not None:
+            if not hasattr(model, "forward") or not hasattr(model, "ndim"):
+                raise TypeError("Trainer grid_inputs/grid_targets are supported for FNO models only.")
+            if backend.name not in {"torch", "tensorflow", "jax", "paddle"}:
+                raise NotImplementedError(
+                    "Grid-supervised FNO training is unavailable for backend "
+                    f"{backend.name!r}."
+                )
+            if grid_inputs.ndim != model.ndim + 2 or grid_targets.ndim != model.ndim + 2:
+                raise ValueError(
+                    f"FNO grid data must have shape [N, C, *{model.ndim}D-grid]; "
+                    f"got input rank {grid_inputs.ndim} and target rank {grid_targets.ndim}."
+                )
+            if grid_inputs.shape[0] != grid_targets.shape[0]:
+                raise ValueError("Trainer: grid input and target sample counts must match.")
+            if grid_inputs.shape[0] == 0:
+                raise ValueError("Trainer: grid training data must contain at least one sample.")
+            if tuple(grid_inputs.shape[2:]) != tuple(grid_targets.shape[2:]):
+                raise ValueError("Trainer: grid input and target spatial shapes must match.")
+            if grid_inputs.shape[1] != model.n_input_channels:
+                raise ValueError(
+                    f"FNO expects {model.n_input_channels} input channels, got {grid_inputs.shape[1]}."
+                )
+            if grid_targets.shape[1] != model.n_output_channels:
+                raise ValueError(
+                    f"FNO expects {model.n_output_channels} target channels, got {grid_targets.shape[1]}."
+                )
+            if residual is not None or collocation_points is not None:
+                raise ValueError(
+                    "Grid-supervised FNO mode currently trains from grid targets only; "
+                    "omit residual and collocation_points."
+                )
+            if any(value is not None for value in (
+                bc_points, bc_values, boundary_conditions, ic_points, ic_values,
+                val_points, val_values,
+            )):
+                raise ValueError(
+                    "Grid-supervised FNO mode accepts grid_val_inputs/grid_val_targets "
+                    "for validation and does not accept pointwise BC, IC, or validation data."
+                )
+        elif residual is None or collocation_points is None:
+            raise ValueError("Pointwise Trainer mode requires both residual and collocation_points.")
 
         self.log_every      = log_every
 
@@ -521,8 +588,11 @@ class Trainer:
 
         # Build optimizer
         tc     = config.training
+        self._optimizer_model = getattr(model, "_model", None)
+        if self._optimizer_model is None:
+            self._optimizer_model = model.parameters()
         self._optimizer = backend.build_optimizer(
-            model          = model._model,
+            model          = self._optimizer_model,
             optimizer_name = tc.optimizer_name,
             lr             = tc.learning_rate,
             weight_decay   = tc.weight_decay if tc.weight_decay > 0 else 0.0,
@@ -621,17 +691,16 @@ class Trainer:
                 "the normal Trainer(...) constructor for 'pinn'/'fno'."
             )
 
-        from physai.backends.torch_backend import TorchBackend
+        from physai.backends import get_backend
         from physai.models import build_spectral_element_trainer
 
+        backend = get_backend(config.problem.backend_name)
         model, usenopinn = build_spectral_element_trainer(
-            config, dim_coeffs, element_widths=element_widths, lr=lr,
+            config, dim_coeffs, element_widths=element_widths, lr=lr, backend=backend,
         )
 
         self = cls.__new__(cls)  # bypass __init__: its point-cloud args don't apply
-        self.backend   = TorchBackend()  # USENOCPModule is torch-only; needed so
-                                          # _apply_lr/save_checkpoint's `b.name`/
-                                          # `b.to_numpy` checks keep working unmodified
+        self.backend   = backend
         self.config    = config
         self.model     = model
         self.residual  = None
@@ -656,8 +725,9 @@ class Trainer:
         self._composite = None
 
         self._useno          = usenopinn
-        self._useno_t        = t_points
+        self._useno_t        = backend.tensor(t_points)
         self._useno_nonlinear_fn = nonlinear_fn
+        self.model.spatial_bounds = tuple(config.problem.domain.bounds)
 
         return self
 
@@ -712,11 +782,12 @@ class Trainer:
         tc = self.config.training
         w  = tc.loss_weights
 
-        self._composite.add(
-            "pde",
-            lambda: self._pde_loss(),
-            weight=w.get("pde", 1.0),
-        )
+        if self.residual is not None:
+            self._composite.add(
+                "pde",
+                lambda: self._pde_loss(),
+                weight=w.get("pde", 1.0),
+            )
         if self._bc_pts is not None and self._bc_val is not None:
             self._composite.add(
                 "bc",
@@ -742,6 +813,12 @@ class Trainer:
             self._composite.add(
                 "data",
                 lambda: self._data_loss(),
+                weight=w.get("data", 1.0),
+            )
+        if self._grid_x is not None and self._grid_y is not None:
+            self._composite.add(
+                "data",
+                lambda: self._grid_data_loss(),
                 weight=w.get("data", 1.0),
             )
 
@@ -952,7 +1029,32 @@ class Trainer:
         u   = self.model.model_fn(self._d_pts)
         return b.mean(b.square(u - self._d_val))
 
+    def _grid_batch(self, inputs: Tensor, targets: Tensor, step: int) -> Tuple[Tensor, Tensor]:
+        """Select a contiguous minibatch of complete grid samples."""
+        n = inputs.shape[0]
+        batch_size = min(max(1, self.config.training.batch_size), n)
+        start = (step * batch_size) % n
+        indices = np.arange(start, start + batch_size) % n
+        b = self.backend
+        return (
+            b.stack([inputs[int(i)] for i in indices], axis=0),
+            b.stack([targets[int(i)] for i in indices], axis=0),
+        )
+
+    def _grid_data_loss(self) -> Tensor:
+        """Supervised FNO loss on complete input/output fields."""
+        b = self.backend
+        inputs, targets = self._grid_batch(self._grid_x, self._grid_y, self._step)
+        prediction = self.model.forward(inputs)
+        return b.mean(b.square(prediction - targets))
+
     def _val_loss(self) -> Optional[float]:
+        if self._grid_vx is not None:
+            b = self.backend
+            with _no_grad_context(b):
+                prediction = self.model.forward(self._grid_vx)
+                val = b.mean(b.square(prediction - self._grid_vy))
+            return float(b.to_numpy(val))
         if self._v_pts is None:
             return None
         b = self.backend
@@ -987,7 +1089,10 @@ class Trainer:
         elif n == "paddle":
             self._optimizer.set_lr(lr)
         elif n == "jax":
-            state = getattr(self, "_jax_opt_state", None)
+            if getattr(self, "_useno", None) is not None:
+                state = self._useno._jax_opt_state
+            else:
+                state = getattr(self, "_jax_opt_state", None)
             if state is not None and hasattr(state, "hyperparams"):
                 state.hyperparams["learning_rate"] = lr
             # If init_jax() hasn't run yet, there's no opt_state to patch;
@@ -1074,7 +1179,7 @@ class Trainer:
         b   = self.backend
         tc  = self.config.training
 
-        b.zero_grad(self.model._model)
+        self._optimizer.zero_grad()
         total, breakdown = self._get_composite_fn()()
         total.backward()
 
@@ -1101,7 +1206,7 @@ class Trainer:
         b   = self.backend
         tc  = self.config.training
 
-        b.zero_grad(self.model._model)
+        self._optimizer.clear_grad()
         total, breakdown = self._get_composite_fn()()
         total.backward()
 
@@ -1153,8 +1258,9 @@ class Trainer:
         params = getattr(self, "_jax_params", None)
         if params is None:
             raise RuntimeError(
-                "JAX training requires self._jax_params to be initialised. "
-                "Call trainer.init_jax(dummy_input) before trainer.train()."
+                "JAX parameters are not initialized. Trainer.train() initializes "
+                "them automatically; call trainer.init_jax(dummy_input) before "
+                "running a training step directly."
             )
 
         def loss_fn(p: Any) -> Any:
@@ -1210,8 +1316,11 @@ class Trainer:
 
     def init_jax(self, dummy_input: Tensor) -> None:
         """
-        Must be called before ``train()`` when using the JAX backend.
-        Initialises Flax model parameters and the optax optimiser state.
+        Initialize JAX model parameters and optimizer state explicitly.
+
+        ``Trainer.train()`` calls this automatically on the first run, using
+        collocation points (or one complete input grid for supervised FNO).
+        Call it directly only when a JAX step is needed before ``train()``.
         """
         import optax
         self._jax_params    = self.model.init_jax_params(dummy_input)
@@ -1432,7 +1541,7 @@ class Trainer:
 
     def _maybe_rar(self, step: int) -> None:
         tc = self.config.training
-        if not tc.rar_enabled:
+        if not tc.rar_enabled or self.residual is None:
             return
         if step == 0 or step % tc.rar_interval != 0:
             return
@@ -1441,6 +1550,7 @@ class Trainer:
             model_fn       = self.model.model_fn,
             current_points = self._coll,
             backend        = self.backend,
+            residual       = self.residual,
         )
         for cb in self.callbacks:
             cb.on_rar_step(self, step)
@@ -1468,6 +1578,10 @@ class Trainer:
         """
         if self.config.model.arch == "spectral_element":
             return self._train_spectral_element(extra_epochs)
+
+        if self.backend.name == "jax" and getattr(self, "_jax_params", None) is None:
+            dummy_input = self._grid_x[:1] if self._grid_x is not None else self._coll
+            self.init_jax(dummy_input)
 
         from physai.chat_setup import ensure_chat_consent
         self.chat_enabled = ensure_chat_consent()
@@ -1543,7 +1657,7 @@ class Trainer:
         """
         b        = self.backend
         state    = {"_step": np.array(self._step)}
-        for name, param in self.model.named_parameters().items():
+        for name, param in dict(self.model.named_parameters()).items():
             state[f"param::{name}"] = b.to_numpy(param)
         np.savez(path + ".npz", **state)
 
@@ -1631,8 +1745,16 @@ class Trainer:
         with _no_grad_context(b):
             return self.model.model_fn(points)
 
+    def predict_grid(self, grid_inputs: Tensor) -> Tensor:
+        """Evaluate an FNO on complete grid fields without gradient tracking."""
+        if not hasattr(self.model, "forward") or not hasattr(self.model, "ndim"):
+            raise TypeError("predict_grid() is available only for FNO models.")
+        b = self.backend
+        with _no_grad_context(b):
+            return self.model.forward(grid_inputs)
+
     # ------------------------------------------------------------------
-    # Cross-validation against a real Dedalus spectral solve
+    # Cross-validation against classical solver output
     # ------------------------------------------------------------------
 
     def cross_validate(
@@ -1663,31 +1785,44 @@ class Trainer:
         # -- shared -------------------------------------------------------
         grid_points: Union[int, Sequence[int]] = 64,
         dt: float = 1e-3,
+        # -- optional native solver adapter ------------------------------
+        solver_method: Optional[str] = None,
+        solver_equation: Optional[str] = None,
+        solver_kwargs: Optional[Dict[str, Any]] = None,
+        classical_result_adapter: Optional[Callable[[Any], Dict[str, Any]]] = None,
     ) -> Dict[str, float]:
         """
         Cross-validate this Trainer's model against a classical numerical
-        solve of the same PDE, run by ``physai.solvers.dedalus.Solver`` —
-        the real numerics, not an approximation of them. One entry point,
-        dispatched the same way ``Solver.solve`` itself dispatches:
+        solve of the same PDE, run by ``physai.solvers.solver.Solver`` —
+        the real numerics, not an approximation of them. By default this
+        comparison uses Dedalus for box domains and the embedded-boundary
+        finite-difference solver for arbitrary geometries. Set
+        ``solver_method`` to use FiPy, FEniCS/FEniCSx, Meep, or a registered
+        solver adapter instead; pass its native arguments in
+        ``solver_kwargs``.
 
         * ``geometry=None`` (default) -> a real Dedalus box solve
           (``Solver.solve_box``). Requires ``domain_type``, ``bounds``,
-          ``variables``, ``equations``, ``bcs``, ``ics``. Only 1D spatial
-          problems, because ``Solver.solve_box`` builds a single
-          ``CartesianCoordinates`` axis in that regime — this is a
-          limitation of the box path, not something this method works
-          around.
+          variables, equations, bcs, and ics. Supports one or more
+          spatial dimensions.
         * ``geometry=<a physai.geometry.Geometry>`` -> an embedded-
           boundary finite-difference solve on a masked N-D grid
           (``Solver.solve_geometry``), any dimension the geometry has.
           Requires ``pde`` (one of "poisson"/"helmholtz"/"heat") and
           ``bc_value``. See ``Solver.solve_geometry``'s docstring for why
           it's scoped to those PDE classes.
+        * ``solver_method=<name>`` -> run another registered solver. Its
+          result must contain ``coordinates`` and named ``values`` (FiPy
+          already returns this format). Finite-element scalar functions are
+          extracted from their dof coordinates and values. For Meep or a
+          custom result layout, supply ``classical_result_adapter(result)``
+          returning ``{"coordinates": [N,d], "values": {name: [N]}}``.
 
-        In both cases: the classical solve runs independently (its own
+        For each path: the classical solve runs independently (its own
         timestepper/discretization/BC scheme), the model is evaluated at
-        the exact same grid, and the return value is the L2 error between
-        them. Nothing about training is touched by calling this.
+        the classical solver's coordinates, and the return value is the L2
+        error between them. Nothing about training is touched by calling
+        this.
 
         Parameters
         ----------
@@ -1709,14 +1844,41 @@ class Trainer:
             grid, scalar or per-axis.
         dt           : shared by both paths — timestep of the classical
             solve.
+        solver_method : optional method name accepted by ``Solver.solve``.
+        solver_equation : optional registered equation name, routed through
+            ``register_equation_solver`` when ``solver_method`` is omitted.
+        solver_kwargs : arguments forwarded to the selected native solver.
+        classical_result_adapter : optional callable to normalize a native
+            result into coordinates and named values; required for Meep's
+            default simulation result and non-scalar FEM layouts.
 
         Returns
         -------
-        Dict of L2 errors. Box path: ``{"<var>_l2_abs": ..., "<var>_l2_rel": ...}``
-        per Dedalus variable. Geometry path: ``{"l2_abs": ..., "l2_rel": ...,
-        "n_compared": ...}``.
+        Dict of L2 errors. The box and adapter paths return per-field keys
+        (``"<var>_l2_abs"``, ``"<var>_l2_rel"``, and
+        ``"<var>_n_compared"``). The legacy geometry path returns
+        ``"l2_abs"``, ``"l2_rel"``, and ``"n_compared"``.
         """
-        from physai.solvers.dedalus import Solver  # lazy: dedalus/cupy stay optional
+        from physai.solvers.solver import Solver  # lazy: optional solver packages stay optional
+
+        if solver_method is not None or solver_equation is not None:
+            def _model_values(points):
+                with _no_grad_context(self.backend):
+                    return self.model.model_fn(points)
+
+            return Solver.cross_validate(
+                _model_values,
+                self.backend,
+                spatial_dims=self.config.problem.domain.spatial_dims,
+                method=solver_method,
+                equation=solver_equation,
+                solver_kwargs=solver_kwargs,
+                result_adapter=classical_result_adapter,
+                variables=variables,
+                output_index=pinn_output_index,
+                eval_time=eval_time,
+                time_domain=self.config.problem.domain.time_domain,
+            )
 
         if geometry is not None:
             if pde is None or bc_value is None:
@@ -1775,15 +1937,6 @@ class Trainer:
                 "(the box/Dedalus path) — or pass `geometry=` for the "
                 "arbitrary-geometry path instead."
             )
-        if self.config.problem.domain.spatial_dims != 1:
-            raise ValueError(
-                "cross_validate(geometry=None) only supports 1D spatial "
-                f"problems — this Trainer's domain has spatial_dims="
-                f"{self.config.problem.domain.spatial_dims}. Pass "
-                "`geometry=` (any dimension) instead, if the PDE is one "
-                "Solver.solve_geometry supports."
-            )
-
         time_domain = self.config.problem.domain.time_domain
         if stop_time is None:
             stop_time = time_domain[1] if time_domain is not None else 1.0
@@ -1802,12 +1955,22 @@ class Trainer:
             stop_time=stop_time,
         )
 
-        x_grid = np.asarray(x_grid).reshape(-1, 1)
-        if time_domain is not None:
-            t_col = np.full_like(x_grid, stop_time)
-            query_np = np.concatenate([x_grid, t_col], axis=1)
+        if isinstance(x_grid, (list, tuple)):
+            # Dedalus returns one local coordinate grid per spatial axis.
+            # Squeeze singleton broadcast axes before forming the tensor
+            # product of model query points.
+            axes = [np.asarray(axis).squeeze().reshape(-1) for axis in x_grid]
+            coordinate_mesh = np.meshgrid(*axes, indexing="ij")
+            coordinates = np.stack(
+                [axis.reshape(-1) for axis in coordinate_mesh], axis=1
+            )
         else:
-            query_np = x_grid
+            coordinates = np.asarray(x_grid).reshape(-1, 1)
+        if time_domain is not None:
+            t_col = np.full((len(coordinates), 1), stop_time)
+            query_np = np.concatenate([coordinates, t_col], axis=1)
+        else:
+            query_np = coordinates
 
         query = self.backend.tensor(query_np)
         pred_np = np.asarray(self.backend.to_numpy(self.model.model_fn(query)))

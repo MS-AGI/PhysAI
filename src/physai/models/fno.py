@@ -32,7 +32,7 @@ Implementation notes
 from __future__ import annotations
 
 import math
-from typing import Any, Callable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -77,8 +77,15 @@ class ComplexWeight:
             self.re = tf.Variable(tf.constant(re), trainable=True)
             self.im = tf.Variable(tf.constant(im), trainable=True)
         else:
-            self.re = backend.tensor(re)
-            self.im = backend.tensor(im)
+            if backend.name == "paddle":
+                import paddle
+                self.re = paddle.create_parameter(shape=shape, dtype="float32")
+                self.im = paddle.create_parameter(shape=shape, dtype="float32")
+                self.re.set_value(paddle.to_tensor(re))
+                self.im.set_value(paddle.to_tensor(im))
+            else:
+                self.re = backend.tensor(re)
+                self.im = backend.tensor(im)
 
     def as_complex(self) -> Tuple[Tensor, Tensor]:
         """Return (real_part, imag_part) as backend tensors."""
@@ -329,7 +336,7 @@ class FNOLayer:
         fn = _ACTS.get(self.activation.lower(), b.tanh)
         return fn(x)
 
-    def __call__(self, v: Tensor) -> Tensor:
+    def __call__(self, v: Tensor, jax_params: Any = None) -> Tensor:
         """
         v : [B, width, *spatial_dims]
         """
@@ -351,7 +358,9 @@ class FNOLayer:
         elif b.name == "tensorflow":
             w_out = self._W(v_flat, training=False)
         elif b.name == "jax":
-            w_out = _jax_apply_mlp(self._W, v_flat)
+            w_out = _jax_apply_mlp(self._W, v_flat, jax_params)
+        elif b.name == "paddle":
+            w_out = self._W(v_flat)
         else:
             w_out = v_flat
 
@@ -435,6 +444,7 @@ class FNO:
             activation   = activation,
             use_residual = False,
         )
+        self._jax_params: Optional[Dict[str, Any]] = None
 
     # ------------------------------------------------------------------
     # Grid encoding
@@ -483,26 +493,29 @@ class FNO:
             v = b.concatenate([v, grid_batch], axis=1)
 
         # 2. Lift: [B, C_in+d, *spatial] → [B, width, *spatial]
-        v = self._lift_channels(v)
+        jax_params = self._jax_params if b.name == "jax" else None
+        v = self._lift_channels(v, None if jax_params is None else jax_params["lift"])
 
         # 3. FNO layers
-        for layer in self._layers:
-            v = layer(v)
+        for i, layer in enumerate(self._layers):
+            layer_params = None if jax_params is None else jax_params["layers"][i]
+            v = layer(v, layer_params)
 
         # 4. Project: [B, width, *spatial] → [B, C_out, *spatial]
-        v = self._project_channels(v)
+        proj_params = None if jax_params is None else jax_params["proj"]
+        v = self._project_channels(v, proj_params)
 
         return v
 
-    def _lift_channels(self, v: Tensor) -> Tensor:
+    def _lift_channels(self, v: Tensor, jax_params: Any = None) -> Tensor:
         """Apply lifting MLP channel-wise (shares weights across spatial pts)."""
-        return self._apply_channel_mlp(self._lift, v)
+        return self._apply_channel_mlp(self._lift, v, jax_params)
 
-    def _project_channels(self, v: Tensor) -> Tensor:
+    def _project_channels(self, v: Tensor, jax_params: Any = None) -> Tensor:
         """Apply projection MLP channel-wise."""
-        return self._apply_channel_mlp(self._proj, v)
+        return self._apply_channel_mlp(self._proj, v, jax_params)
 
-    def _apply_channel_mlp(self, mlp: Any, v: Tensor) -> Tensor:
+    def _apply_channel_mlp(self, mlp: Any, v: Tensor, jax_params: Any = None) -> Tensor:
         """
         Apply a backend-native MLP to tensor v: [B, C, *spatial]
         by reshaping to [B*N_spatial, C], applying MLP, reshaping back.
@@ -530,7 +543,9 @@ class FNO:
         elif b.name == "tensorflow":
             out = mlp(v_flat, training=False)
         elif b.name == "jax":
-            out = _jax_apply_mlp(mlp, v_flat)
+            out = _jax_apply_mlp(mlp, v_flat, jax_params)
+        elif b.name == "paddle":
+            out = mlp(v_flat)
         else:
             out = v_flat
 
@@ -552,9 +567,12 @@ class FNO:
         with PDEResidual, by treating each input point as a [1, C, 1]
         grid and evaluating the FNO.
 
-        NOTE: FNO is inherently a grid-to-grid operator. For pointwise
-        evaluation, prefer PINN. This property is provided for
-        compatibility with the PhysAI trainer's unified interface.
+        FNO is inherently a grid-to-grid operator. This compatibility
+        adapter gives every point an independent one-cell grid, so there
+        is no neighboring grid context and no meaningful spectral mixing.
+        Use ``Trainer(grid_inputs=..., grid_targets=...)`` with complete
+        fields to train or evaluate the actual FNO operator; use PINN for
+        pointwise PDE collocation training.
         """
         def fn(x: Tensor) -> Tensor:
             b   = self.backend
@@ -571,11 +589,62 @@ class FNO:
     # ------------------------------------------------------------------
 
     def parameters(self) -> List[Tensor]:
+        if self.backend.name == "jax":
+            if self._jax_params is None:
+                return []
+            import jax
+            return list(jax.tree_util.tree_leaves(self._jax_params))
         b      = self.backend
         params = b.parameters(self._lift) + b.parameters(self._proj)
         for layer in self._layers:
             params += layer.parameters()
         return params
+
+    def named_parameters(self) -> dict:
+        """Return stable flat parameter names for Trainer checkpoints."""
+        return {f"param_{i}": p for i, p in enumerate(self.parameters())}
+
+    def init_jax_params(self, dummy_input: Tensor) -> Any:
+        """Initialize and return the full FNO parameter pytree for JAX."""
+        if self.backend.name != "jax":
+            raise RuntimeError("init_jax_params() is only valid for the JAX backend.")
+        import jax
+        import jax.numpy as jnp
+
+        def init_mlp(mlp: Any, in_dim: int) -> Any:
+            if hasattr(mlp, "init"):
+                return mlp.init(mlp.init_key, jnp.zeros((1, in_dim), dtype=dummy_input.dtype))
+            return mlp.params
+
+        in_dim = self.n_input_channels + (self.ndim if self.append_grid else 0)
+        params = {
+            "lift": init_mlp(self._lift, in_dim),
+            "layers": [
+                {
+                    "spectral_re": layer.spectral.weight.re,
+                    "spectral_im": layer.spectral.weight.im,
+                    "W": init_mlp(layer._W, self.width),
+                }
+                for layer in self._layers
+            ],
+            "proj": init_mlp(self._proj, self.width),
+        }
+        self.set_jax_params(params)
+        return params
+
+    def set_jax_params(self, params: Dict[str, Any]) -> None:
+        """Bind the supplied pytree to each functional JAX FNO component."""
+        if self.backend.name != "jax":
+            raise RuntimeError("set_jax_params() is only valid for the JAX backend.")
+        self._jax_params = params
+        for mlp, mlp_params in [(self._lift, params["lift"]), (self._proj, params["proj"])]:
+            if hasattr(mlp, "bound_params"):
+                mlp.bound_params = mlp_params
+        for layer, layer_params in zip(self._layers, params["layers"]):
+            if hasattr(layer._W, "bound_params"):
+                layer._W.bound_params = layer_params["W"]
+            layer.spectral.weight.re = layer_params["spectral_re"]
+            layer.spectral.weight.im = layer_params["spectral_im"]
 
     def __repr__(self) -> str:
         n = sum(
@@ -633,7 +702,7 @@ def build_fno(
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _jax_apply_mlp(mlp: Any, x: Tensor) -> Tensor:
+def _jax_apply_mlp(mlp: Any, x: Tensor, params: Any = None) -> Tensor:
     """
     Run a JAX-backend MLP built by ``JAXBackend.build_mlp`` on input ``x``.
 
@@ -655,11 +724,14 @@ def _jax_apply_mlp(mlp: Any, x: Tensor) -> Tensor:
     no error raised.
     """
     if hasattr(mlp, "bound_params"):  # _FlaxModelHandle
-        if mlp.bound_params is None:
+        if params is None:
+            params = mlp.bound_params
+        if params is None:
             mlp.bound_params = mlp.init(mlp.init_key, x)
-        return mlp.apply(mlp.bound_params, x)
+            params = mlp.bound_params
+        return mlp.apply(params, x)
     # _PureJAXMLP: params already initialised inside build_mlp
-    return mlp.apply(mlp.params, x)
+    return mlp.apply(mlp.params if params is None else params, x)
 
 
 def _split_complex(backend: AbstractBackend, z: Tensor) -> Tuple[Tensor, Tensor]:
@@ -677,6 +749,9 @@ def _split_complex(backend: AbstractBackend, z: Tensor) -> Tuple[Tensor, Tensor]
     if b.name == "tensorflow":
         import tensorflow as tf
         return tf.math.real(z), tf.math.imag(z)
+    if b.name == "paddle":
+        import paddle
+        return paddle.real(z), paddle.imag(z)
     # Fallback: assume numpy-like
     import numpy as np
     return np.real(z), np.imag(z)
@@ -699,6 +774,9 @@ def _join_complex(
     if b.name == "tensorflow":
         import tensorflow as tf
         return tf.complex(re, im)
+    if b.name == "paddle":
+        import paddle
+        return paddle.complex(re, im)
     import numpy as np
     return re + 1j * im
 

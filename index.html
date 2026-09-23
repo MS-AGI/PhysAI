@@ -234,7 +234,7 @@
       <li><strong>Numerical cross-validation against Dedalus</strong> — <code>Trainer.cross_validate(...)</code> runs an independent classical solve (a real Dedalus spectral solve, or embedded-boundary finite differences on arbitrary geometry) and reports L2 error against the trained network on the same grid.</li>
       <li><strong>Physics-focused visualization</strong> — loss-history, residual-field, spectrum, and 1-D/2-D plots, plus an N-D toolkit for slicing, projection, isosurfaces, and animation.</li>
       <li><strong>Multi-backend by construction</strong> — <code>AbstractBackend</code> fixes the tensor/autodiff/optimizer surface; <code>TorchBackend</code>, <code>JAXBackend</code>, <code>TensorFlowBackend</code>, and <code>PaddleBackend</code> each implement it, so residuals and losses are written once and run correctly on all four.</li>
-      <li><strong>Optional, consent-gated extras</strong> — a live terminal dashboard (<code>rich</code>) with an optional local-LLM chat panel, and a bundled Dedalus installer. Nothing runs, prompts, or downloads on <code>pip install</code>/<code>import physai</code>; everything is opt-in per run and inert in CI.</li>
+      <li><strong>Optional, consent-gated extras</strong> — a live terminal dashboard (<code>rich</code>) with an optional local-LLM chat panel, and a bundled Conda installer for Dedalus, FiPy, FEniCS, FEniCSx, Meep, and CuPy. Nothing installs on <code>pip install</code>/<code>import physai</code>; setup is user-invoked and inert in CI.</li>
     </ul>
   </section>
 
@@ -255,7 +255,7 @@ cd PhysAI
 pip install -e ".[jax,tensorflow,dashboard]"</code></pre>
     <div class="pill-row">
       <span class="pill">Python ≥ 3.9</span>
-      <span class="pill">Dedalus installed on request via physai.install_dedalus()</span>
+      <span class="pill">Solver dependencies on request via physai.install_solver_dependencies()</span>
       <span class="pill">JAX: pin via the jax extra, not an unpinned pip install</span>
     </div>
   </section>
@@ -274,13 +274,13 @@ pip install -e ".[jax,tensorflow,dashboard]"</code></pre>
 │   ├── fno.py                 # Fourier Neural Operator
 │   └── spectral_element.py, spectralpinn.py   # USENO (Chebyshev spectral element)
 ├── solvers/
-│   └── dedalus.py            # real Dedalus (box) + embedded-boundary FD (arbitrary geometry)
+│   └── solver.py             # Dedalus, embedded-boundary FD, and optional native solver adapters
 ├── geometry.py                # SDF primitives, CSG, mesh import, BoundaryConditionSet
 ├── trainer.py                 # Trainer: training loop, callbacks, cross_validate, per-backend step logic
 ├── visualization.py            # 1-D/2-D plots, loss curves, spectra, animations
 ├── visualization_nd.py          # slicing / projection / isosurfaces / animation for N-D fields
 ├── dashboard/live.py            # optional live terminal dashboard (Callback)
-├── chat_setup.py, dedalus_setup.py  # consent-gated optional-extra setup
+├── chat_setup.py, solver_setup.py   # consent-gated optional solver setup
 └── utils.py                    # sampling (LHS/Sobol), metrics, seeding, dtype helpers
 tests/
 └── test_pde_everything.py     # Tier A/B/C suite — see Testing below
@@ -294,31 +294,23 @@ requirements.txt</code></pre>
   <section class="block" id="quick-start">
     <h2 class="section-title">Quick Start</h2>
     <p class="section-sub">
-      The entry point is <code>AutoOptimizer</code>, not a hand-built model and training loop: the governing equation
-      and domain are declared via a <code>ProblemSpec</code>, and <code>AutoOptimizer</code> emits a
-      <code>RuntimeConfig</code> that <code>Trainer</code> consumes directly.
+      These three runnable examples demonstrate a user-registered Maxwell residual with animation,
+      a wave PINN cross-validated against Dedalus, and the Einstein vacuum residual with Schwarzschild
+      exterior metric data. Run the commands from the repository root after installing PhysAI and
+      the dependencies required by each example.
     </p>
-    <pre><code>import numpy as np
-from physai.backends import get_backend
-from physai.core.auto_optimizer import ProblemSpec, AutoOptimizer
-from physai.core.pde_residual import build_residual
-from physai.geometry import DomainSpec, box, BoundaryConditionSet, everywhere
-from physai.trainer import Trainer
 
-backend = get_backend("torch", device="cpu")  # swap backends with a single string change
+    <h3>1. Register Maxwell's equations and animate the field</h3>
+    <p>Registers a one-dimensional vacuum Maxwell system, trains six field outputs, and animates the transverse electric field Ey. Source: <a href="examples/maxwell_animation.py">examples/maxwell_animation.py</a>.</p>
+    <pre><code>python examples/maxwell_animation.py</code></pre>
 
-# 2-D Poisson equation, ∇²u = f, on the unit box, with a manufactured
-# solution u(x, y) = x² + y² imposed as Dirichlet data on the boundary.
-domain = DomainSpec(spatial_dims=2, bounds=[(-1, 1), (-1, 1)])
-analytic = lambda x: (x[:, 0] ** 2 + x[:, 1] ** 2).reshape(-1, 1)
+    <h3>2. Solve the wave equation and cross-validate</h3>
+    <p>Trains the first-order state (u, v) and compares both fields with an independent Dedalus solve. Install the optional Dedalus dependency. Source: <a href="examples/wave_cross_validation.py">examples/wave_cross_validation.py</a>.</p>
+    <pre><code>python examples/wave_cross_validation.py</code></pre>
 
-geom = box(domain.bounds)
-bcs = BoundaryConditionSet(geom)
-bcs.add("dirichlet", value=lambda x: analytic(x).astype(np.float32), region=everywhere)
-
-spec = ProblemSpec(pde_name="poisson", domain=domain, backend_name="torch")
-config = AutoOptimizer(backend, verbose=True).analyse(spec)   # sizes the network, picks lr/optimizer/etc.
-residual = build_residual("poisson", backend)</code></pre>
+    <h3>3. Fit a Schwarzschild exterior with the Einstein field residual</h3>
+    <p>Trains <code>einstein_field</code> against the exact isotropic-coordinate Schwarzschild vacuum metric on a region outside the horizon. This models a Schwarzschild exterior spacetime. Source: <a href="examples/schwarzschild_einstein_residual.py">examples/schwarzschild_einstein_residual.py</a>.</p>
+    <pre><code>python examples/schwarzschild_einstein_residual.py</code></pre>
   </section>
 
   <!-- Architectures -->

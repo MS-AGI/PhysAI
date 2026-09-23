@@ -619,7 +619,8 @@ class TorchBackend(AbstractBackend):
             )
         if optimizer_name.lower() not in {"adamw", "adamax", "lamb"}:
             kwargs.pop("weight_decay", None) # Only adamw supports weight decay
-        return cls(model.parameters(), lr=lr, **kwargs)
+        parameters = model if isinstance(model, (list, tuple)) else model.parameters()
+        return cls(parameters, lr=lr, **kwargs)
 
     def optimizer_step(
         self,

@@ -805,19 +805,46 @@ class TestTrainerCrossValidateValidation:
         with pytest.raises(ValueError, match="domain_type"):
             trainer.cross_validate()
 
-    def test_box_path_rejects_non_1d_domain(self):
-        # _build_poisson_trainer's domain is 2D, so even with every box
-        # arg supplied, cross_validate(geometry=None) must reject it.
+    def test_box_path_supports_multidimensional_domain(self, monkeypatch):
         trainer = _build_poisson_trainer(max_epochs=1)
-        with pytest.raises(ValueError, match="only supports 1D spatial"):
-            trainer.cross_validate(
-                domain_type="chebyshev",
-                bounds=(0.0, 1.0),
-                variables=["u"],
-                equations=["dt(u) - dx(dx(u)) = 0"],
-                bcs=["left(u) = 0", "right(u) = 0"],
-                ics={"u": lambda x: np.zeros_like(x)},
-            )
+        from physai.solvers.solver import Solver
+
+        monkeypatch.setattr(
+            Solver,
+            "solve_box",
+            staticmethod(lambda **kwargs: (
+                [np.array([0.0, 1.0]), np.array([0.0, 1.0])],
+                {"u": np.zeros((2, 2))},
+            )),
+        )
+        result = trainer.cross_validate(
+            domain_type=["chebyshev", "chebyshev"],
+            bounds=[(0.0, 1.0), (0.0, 1.0)],
+            grid_points=[2, 2],
+            variables=["u"],
+            equations=["dx_x0(dx_x0(u)) + dx_x1(dx_x1(u)) = 0"],
+            bcs=[],
+            ics={"u": lambda x, y: np.zeros_like(x + y)},
+        )
+        assert set(result) == {"u_l2_abs", "u_l2_rel"}
+        assert np.isfinite(result["u_l2_abs"])
+
+    def test_cross_validate_dispatches_to_registered_solver_adapter(self, monkeypatch):
+        from physai.solvers import solver as solver_module
+
+        trainer = _build_poisson_trainer(max_epochs=1)
+        monkeypatch.setitem(
+            solver_module._SOLVER_BACKENDS,
+            "test_cross_validate_adapter",
+            lambda: {
+                "coordinates": np.array([[0.0, 0.0], [1.0, 1.0]]),
+                "values": {"u": np.zeros(2)},
+            },
+        )
+        result = trainer.cross_validate(solver_method="test_cross_validate_adapter")
+
+        assert set(result) == {"u_l2_abs", "u_l2_rel", "u_n_compared"}
+        assert result["u_n_compared"] == 2
 
 
 class TestTrainerCrossValidateGeometryPath:
@@ -991,6 +1018,16 @@ class TestTrainerSpectralElement:
         assert trainer.residual is None
         assert trainer._composite is None
         assert trainer.config.model.arch == "spectral_element"
+
+    def test_spectral_element_predict_uses_space_time_coordinates(self):
+        config = _make_spectral_element_config()
+        t_points = torch.rand(3, 1)
+        trainer = Trainer.for_spectral_element(
+            config, [{2: 1.0}], t_points, nonlinear_fn=None,
+        )
+        prediction = trainer.predict(torch.tensor([[-1.0, 0.0], [0.0, 0.5], [1.0, 1.0]]))
+        assert prediction.shape == (3, 1)
+        assert torch.isfinite(prediction).all()
 
     def test_train_dispatches_to_spectral_element_loop(self):
         config = _make_spectral_element_config(max_epochs=3)
