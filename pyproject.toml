@@ -54,7 +54,6 @@ keywords = [
 
 classifiers = [
     "Development Status :: 4 - Beta",
-    "License :: OSI Approved :: GNU Affero General Public License v3",
     "Intended Audience :: Science/Research",
     "Intended Audience :: Developers",
     "Topic :: Scientific/Engineering :: Physics",
