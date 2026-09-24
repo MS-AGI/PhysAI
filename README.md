@@ -180,7 +180,7 @@ Beyond checking a trained network against a closed-form solution (available for 
 * **Arbitrary geometry and PDE residuals** (`geometry=<a physai.geometry.Geometry>`) — `Solver.solve_geometry` keeps sparse embedded-boundary finite-difference fast paths for Poisson, Helmholtz, and heat, and routes other registered PDEs or caller-supplied residuals through `autosolve`. AutoSolve works from the `residual(model_fn, points)` contract on boxes, CSG, smooth SDFs, and mesh geometries; unregistered equations can supply a residual callable with their constraints.
 * **General classical discretizations**: `Solver.solve(method="discrete_geometry", geometry=..., ...)` solves a sparse linear system or nonlinear residual/Jacobian system on any `Geometry`, including CSG and smooth SDF shapes. Supply `assembler(context) -> (A, b)` or `residual_fn(u, context)` plus `jacobian_fn(u, context)`. The context includes the masked grid, compact unknown indices, projected boundary crossings, normals, and optional space-time coordinates. This handles any PDE for which you provide a classical discretization; a PDE name alone does not determine a numerical scheme.
 * **Unregistered PDE residuals**: `autosolve(residual, geometry, ...)` accepts any callable with the existing `residual(model_fn, points) -> residual tensor` contract, including residual classes not in `PDE_REGISTRY`. It uses a smooth Gaussian RBF field and SciPy nonlinear least squares, with geometry-aware interior/boundary samples, Dirichlet/Neumann/Robin/periodic constraints, optional initial/data constraints, and an `AutoSolverOptimizer` that budgets collocation points from geometry, output count, and available PDE metadata. The optimizer scales anisotropic space-time coordinates, balances PDE and constraint residual blocks, and selects extra RBF regularization when the kernel is ill-conditioned. For a new coupled system, pass `n_output`; the residual must support the selected backend's differentiation operations. RBF collocation is a general method, while convergence still depends on the PDE, constraints, smoothness, and resolution. Example: `solution = autosolve(my_residual, geometry, backend="torch", n_output=2, boundary_conditions=bcs)`.
-* **LaTeX equations**: `build_latex_residual(equation, backend, fields=("u",), coordinates=("x", "t"), parameters={...})` validates supported syntax immediately and returns a backend-differentiable residual. Use `register_latex_pde(name, equation, ...)` to put it in `PDE_REGISTRY`, then construct it with `build_residual(name, backend, ...)`. The parser supports arithmetic, common scalar functions, partial derivative fractions/subscripts, and scalar Laplacians; declare field/coordinate order explicitly.
+* **LaTeX equations into AutoSolve**: `build_latex_residual(...)` validates supported syntax and returns a backend-differentiable residual that can be passed straight to `autosolve(residual, geometry, ...)`. Or call `register_latex_pde(...)` and let `autosolve(geometry=..., pde="name", ...)` build the registered residual. The parser supports arithmetic, common scalar functions, partial derivative fractions/subscripts, and scalar Laplacians; declare field/coordinate order explicitly. AutoSolve still needs a geometry and suitable boundary, initial, or data constraints for the problem.
 * **Native solver adapters** — pass `solver_method="fipy"`, `"fenics"`, `"fenicsx"`, or `"meep"` and its native arguments through `solver_kwargs`. For a custom adapter, register it with `register_solver`; `register_equation_solver` can associate a PDE name with a solver. FiPy and scalar finite-element results are normalized automatically. For Meep or a custom result format, pass `classical_result_adapter` that returns coordinates and named values. These packages are installed in the same Conda environment by `physai.install_solver_dependencies()`.
 
 ```python
@@ -198,6 +198,55 @@ metrics = trainer.cross_validate(
 ```
 
 Nothing about training is touched by calling `cross_validate` — it runs the classical solve independently, evaluates the trained model at the same grid points, and returns the comparison.
+
+### Register a PDE from LaTeX and solve it with AutoSolve
+
+LaTeX registration turns a supported equation into the same callable residual interface used by registered and custom PDEs. AutoSolve can build that residual by registry name, or accept the compiled residual directly. You still provide the domain and the constraints that make the problem well-posed; syntax validation does not infer boundary or initial conditions.
+
+```python
+import numpy as np
+
+from physai import BoundaryConditionSet, autosolve, box, register_latex_pde
+from physai.backends import get_backend
+
+backend = get_backend("torch")
+equation = (
+    r"\frac{\partial u}{\partial t} "
+    r"+ u\frac{\partial u}{\partial x} "
+    r"- \nu\frac{\partial^2 u}{\partial x^2} = 0"
+)
+register_latex_pde(
+    "custom_burgers",
+    equation,
+    fields=("u",),
+    coordinates=("x", "t"),
+    parameters={"nu": 0.01},
+)
+
+geometry = box([(-1.0, 1.0)])
+boundary_conditions = BoundaryConditionSet(geometry)
+for endpoint in (-1.0, 1.0):
+    boundary_conditions.add(
+        "dirichlet",
+        value=lambda points: np.zeros(len(points)),
+        region=lambda points, endpoint=endpoint: np.isclose(points[:, 0], endpoint),
+        name=f"x_{endpoint}",
+    )
+
+x0 = np.linspace(-1.0, 1.0, 32)
+ic_points = np.column_stack((x0, np.zeros_like(x0)))
+solution = autosolve(
+    geometry=geometry,
+    pde="custom_burgers",
+    backend=backend,
+    time_domain=(0.0, 1.0),
+    boundary_conditions=boundary_conditions,
+    ic_points=ic_points,
+    ic_values=-np.sin(np.pi * x0),
+)
+```
+
+For a one-off equation, call `build_latex_residual(equation, backend, fields=..., coordinates=..., parameters=...)` and pass the returned object as the first argument to `autosolve(residual, geometry, ...)`. The current LaTeX parser accepts its documented scalar expression grammar; it does not interpret arbitrary LaTeX commands or tensor notation. AutoSolve convergence depends on the equation, constraints, geometry sampling, and resolution.
 
 ---
 

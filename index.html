@@ -233,7 +233,7 @@
       <li><strong><code>AutoOptimizer</code></strong> — reads equation order, nonlinearity, and stiffness to emit a frozen <code>RuntimeConfig</code>: learning rate, optimizer choice, collocation-point density, loss weighting, warm-up schedule, network size, and precision.</li>
       <li><strong>Arbitrary geometry via SDFs</strong> — box, ball, cylinder, half-space, ellipsoid, torus, capsule, 2-D polygon primitives; CSG combinators; user-defined SDFs; mesh import (<code>.stl</code>/<code>.obj</code>/<code>.ply</code>/<code>.off</code>); Dirichlet/Neumann/Robin/periodic boundary conditions on arbitrary regions.</li>
       <li><strong>Numerical cross-validation</strong> — <code>Trainer.cross_validate(...)</code> compares the model with an independent Dedalus box solve, embedded-boundary finite differences, or optional native solver adapters for FiPy, FEniCS, FEniCSx, and Meep.</li>
-      <li><strong>LaTeX-to-residual PDE registration</strong> — <code>build_latex_residual(...)</code> validates supported equation syntax and compiles differentiable residuals; <code>register_latex_pde(...)</code> adds them to <code>PDE_REGISTRY</code>.</li>
+      <li><strong>LaTeX-to-residual AutoSolve</strong> — validate supported equation syntax with <code>build_latex_residual(...)</code>, then pass the differentiable residual to <code>autosolve(residual, geometry, ...)</code>; or register it with <code>register_latex_pde(...)</code> and solve by its PDE name.</li>
       <li><strong>Physics-focused visualization</strong> — loss-history, residual-field, spectrum, and 1-D/2-D plots, plus an N-D toolkit for slicing, projection, isosurfaces, and animation.</li>
       <li><strong>Multi-backend by construction</strong> — <code>AbstractBackend</code> fixes the tensor/autodiff/optimizer surface; <code>TorchBackend</code>, <code>JAXBackend</code>, <code>TensorFlowBackend</code>, and <code>PaddleBackend</code> each implement it, so residuals and losses are written once and run correctly on all four.</li>
       <li><strong>Optional, consent-gated extras</strong> — a live terminal dashboard (<code>rich</code>) with an optional local-LLM chat panel, and a bundled Conda installer for Dedalus, FiPy, FEniCS, FEniCSx, Meep, and CuPy. Nothing installs on <code>pip install</code>/<code>import physai</code>; setup is user-invoked and inert in CI.</li>
@@ -347,26 +347,35 @@ requirements.txt</code></pre>
   <!-- LaTeX PDE Registration -->
   <section class="block" id="latex-pde-registration">
     <h2 class="section-title">Build a Residual from LaTeX</h2>
-    <p class="section-sub"><code>build_latex_residual</code> parses the equation when called, checks its symbols and syntax, and returns a residual that uses the selected backend for automatic differentiation. Declare field names, coordinate order, and numeric parameters explicitly. The supported notation includes arithmetic, common scalar functions, partial derivative fractions and subscripts, and scalar Laplacians.</p>
-    <pre><code>from physai.backends import get_backend
-from physai import build_latex_residual, register_latex_pde, build_residual
+    <p class="section-sub"><code>build_latex_residual</code> parses the equation when called, checks its symbols and syntax, and returns a residual that uses the selected backend for automatic differentiation. Declare field names, coordinate order, and numeric parameters explicitly. The supported notation includes arithmetic, common scalar functions, partial derivative fractions and subscripts, and scalar Laplacians. Pass this residual directly to <code>autosolve(residual, geometry, ...)</code>, or register it with <code>register_latex_pde</code> and ask AutoSolve to build it by name. In either case, provide the geometry and suitable boundary, initial, or data constraints; these are not inferred from the equation.</p>
+    <pre><code>import numpy as np
+from physai.backends import get_backend
+from physai import BoundaryConditionSet, autosolve, box, register_latex_pde
 
 backend = get_backend("torch")
 equation = r"\frac{\partial u}{\partial t} + u\frac{\partial u}{\partial x} - \nu\frac{\partial^2 u}{\partial x^2} = 0"
-
-# Build a residual directly.
-residual = build_latex_residual(
-    equation, backend,
-    fields=("u",), coordinates=("x", "t"), parameters={"nu": 0.01},
-)
-
-# Or validate and register it for reuse by name.
 register_latex_pde(
     "custom_burgers", equation,
     fields=("u",), coordinates=("x", "t"), parameters={"nu": 0.01},
 )
-    residual = build_residual("custom_burgers", backend)</code></pre>
-    <p class="section-sub">The parser reports unsupported notation early. Vector/tensor operators and arbitrary LaTeX macros are outside the current grammar.</p>
+
+geometry = box([(-1.0, 1.0)])
+bcs = BoundaryConditionSet(geometry)
+for endpoint in (-1.0, 1.0):
+    bcs.add(
+        "dirichlet", value=lambda x: np.zeros(len(x)),
+        region=lambda x, endpoint=endpoint: np.isclose(x[:, 0], endpoint),
+        name=f"x_{endpoint}",
+    )
+
+x0 = np.linspace(-1.0, 1.0, 32)
+ic_points = np.column_stack((x0, np.zeros_like(x0)))
+solution = autosolve(
+    geometry=geometry, pde="custom_burgers", backend=backend,
+    time_domain=(0.0, 1.0), boundary_conditions=bcs,
+    ic_points=ic_points, ic_values=-np.sin(np.pi * x0),
+)</code></pre>
+    <p class="section-sub">For a one-off equation, pass the object returned by <code>build_latex_residual(equation, backend, ...)</code> directly as the first argument to <code>autosolve(residual, geometry, ...)</code>. AutoSolve needs the problem constraints; they are not inferred from the PDE. Unsupported notation is rejected during parsing. Vector/tensor operators and arbitrary LaTeX macros are outside the current grammar.</p>
     <h3>Register the two Maxwell tensor laws</h3>
     <p>The current parser accepts scalar component equations rather than Einstein-index tensor notation. The runnable example expands the covariant laws <code>∂μF<sup>μν</sup> = μ₀J<sup>ν</sup></code> and <code>∂μF̃<sup>μν</sup> = 0</code> into Gauss, Ampère–Maxwell, no-magnetic-charge, and Faraday components, then registers all eight residual equations. Its fields include E, B, charge density <code>ρ</code>, and current density J; <code>c</code> and <code>ε₀</code> are configurable parameters. It then trains a PINN on a periodic 3-D plane wave and animates the predicted <code>E_y</code> slice. The linked file contains the full registration, training, prediction, and animation code.</p>
     <pre><code>python examples/maxwell_latex_register.py</code></pre>
