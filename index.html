@@ -233,6 +233,7 @@
       <li><strong><code>AutoOptimizer</code></strong> — reads equation order, nonlinearity, and stiffness to emit a frozen <code>RuntimeConfig</code>: learning rate, optimizer choice, collocation-point density, loss weighting, warm-up schedule, network size, and precision.</li>
       <li><strong>Arbitrary geometry via SDFs</strong> — box, ball, cylinder, half-space, ellipsoid, torus, capsule, 2-D polygon primitives; CSG combinators; user-defined SDFs; mesh import (<code>.stl</code>/<code>.obj</code>/<code>.ply</code>/<code>.off</code>); Dirichlet/Neumann/Robin/periodic boundary conditions on arbitrary regions.</li>
       <li><strong>Numerical cross-validation</strong> — <code>Trainer.cross_validate(...)</code> compares the model with an independent Dedalus box solve, embedded-boundary finite differences, or optional native solver adapters for FiPy, FEniCS, FEniCSx, and Meep.</li>
+      <li><strong>LaTeX-to-residual PDE registration</strong> — <code>build_latex_residual(...)</code> validates supported equation syntax and compiles differentiable residuals; <code>register_latex_pde(...)</code> adds them to <code>PDE_REGISTRY</code>.</li>
       <li><strong>Physics-focused visualization</strong> — loss-history, residual-field, spectrum, and 1-D/2-D plots, plus an N-D toolkit for slicing, projection, isosurfaces, and animation.</li>
       <li><strong>Multi-backend by construction</strong> — <code>AbstractBackend</code> fixes the tensor/autodiff/optimizer surface; <code>TorchBackend</code>, <code>JAXBackend</code>, <code>TensorFlowBackend</code>, and <code>PaddleBackend</code> each implement it, so residuals and losses are written once and run correctly on all four.</li>
       <li><strong>Optional, consent-gated extras</strong> — a live terminal dashboard (<code>rich</code>) with an optional local-LLM chat panel, and a bundled Conda installer for Dedalus, FiPy, FEniCS, FEniCSx, Meep, and CuPy. Nothing installs on <code>pip install</code>/<code>import physai</code>; setup is user-invoked and inert in CI.</li>
@@ -268,6 +269,7 @@ pip install -e ".[jax,tensorflow,dashboard]"</code></pre>
     <pre><code>src/physai/
 ├── core/
 │   ├── pde_residual.py      # PDE_REGISTRY: 57 governing-equation residuals
+│   ├── latex_pde.py         # Validated LaTeX equations -> backend residuals
 │   ├── auto_optimizer.py    # ProblemSpec -> AutoOptimizer -> RuntimeConfig
 │   └── losses.py            # residual / dirichlet / neumann / robin / periodic losses
 ├── backends/                 # AbstractBackend + torch / jax / tensorflow / paddle
@@ -297,7 +299,7 @@ requirements.txt</code></pre>
     <h2 class="section-title">Quick Start</h2>
     <p class="section-sub">
       These three runnable examples demonstrate a user-registered Maxwell residual with animation,
-      a wave PINN cross-validated against Dedalus, and the Einstein vacuum residual with Schwarzschild
+      a wave PINN compared with AutoSolve or the optional custom solve-box path, and the Einstein vacuum residual with Schwarzschild
       exterior metric data. Run the commands from the repository root after installing PhysAI and
       the dependencies required by each example.
     </p>
@@ -307,11 +309,11 @@ requirements.txt</code></pre>
     <pre><code>python examples/maxwell_animation.py</code></pre>
 
     <h3>2. Solve the wave equation and cross-validate</h3>
-    <p>Trains the first-order state (u, v) and compares both fields with an independent Dedalus solve. Requires the Conda solver environment; see the Installation section. Source: <a href="examples/wave_cross_validation.py">examples/wave_cross_validation.py</a>.</p>
+    <p>Registers the two-field first-order wave system and trains (u, v). By default it compares against AutoSolve; use <code>--reference solve-box</code> to select the custom Dedalus box-solver path as an alternative. The solve-box option requires the Conda solver environment; see the Installation section. Source: <a href="examples/wave_cross_validation.py">examples/wave_cross_validation.py</a>.</p>
     <pre><code>python examples/wave_cross_validation.py</code></pre>
 
     <h3>3. Fit a Schwarzschild exterior with the Einstein field residual</h3>
-    <p>Trains <code>einstein_field</code> against the exact isotropic-coordinate Schwarzschild vacuum metric on a region outside the horizon. This models a Schwarzschild exterior spacetime. Source: <a href="examples/schwarzschild_einstein_residual.py">examples/schwarzschild_einstein_residual.py</a>.</p>
+    <p>Trains <code>einstein_field</code> against the isotropic-coordinate Schwarzschild vacuum metric outside the horizon, then prints a held-out relative L2 metric error. Source: <a href="examples/schwarzschild_einstein_residual.py">examples/schwarzschild_einstein_residual.py</a>.</p>
     <pre><code>python examples/schwarzschild_einstein_residual.py</code></pre>
   </section>
 
@@ -338,8 +340,37 @@ requirements.txt</code></pre>
   <!-- Numerical Cross-Validation -->
   <section class="block" id="numerical-cross-validation">
     <h2 class="section-title">Numerical Cross-Validation</h2>
-    <p class="section-sub"><code>Trainer.cross_validate(...)</code> evaluates a trained model at points from an independent classical solve and reports L2 errors. Box problems use Dedalus spectral methods; arbitrary geometries use the embedded-boundary finite-difference solver, currently for Poisson, Helmholtz, and heat; optional native adapters support FiPy, FEniCS, FEniCSx, and Meep. Native adapters accept solver-specific inputs through <code>solver_kwargs</code>; Meep and custom result types may need a result adapter.</p>
+    <p class="section-sub"><code>Trainer.cross_validate(...)</code> evaluates a trained model at points from an independent classical solve and reports L2 errors. Box problems can use Dedalus spectral methods; arbitrary geometries use embedded-boundary finite-difference fast paths for Poisson, Helmholtz, and heat, or AutoSolve for other registered PDEs and caller-supplied residuals. Optional native adapters support FiPy, FEniCS, FEniCSx, and Meep. Native adapters accept solver-specific inputs through <code>solver_kwargs</code>; Meep and custom result types may need a result adapter.</p>
     <p class="section-sub">The native solver packages are installed through the bundled Conda environment. Run <code>python -m physai.solver_setup</code>, activate <code>physai-solvers</code>, and install PhysAI in that environment before using these adapters.</p>
+  </section>
+
+  <!-- LaTeX PDE Registration -->
+  <section class="block" id="latex-pde-registration">
+    <h2 class="section-title">Build a Residual from LaTeX</h2>
+    <p class="section-sub"><code>build_latex_residual</code> parses the equation when called, checks its symbols and syntax, and returns a residual that uses the selected backend for automatic differentiation. Declare field names, coordinate order, and numeric parameters explicitly. The supported notation includes arithmetic, common scalar functions, partial derivative fractions and subscripts, and scalar Laplacians.</p>
+    <pre><code>from physai.backends import get_backend
+from physai import build_latex_residual, register_latex_pde, build_residual
+
+backend = get_backend("torch")
+equation = r"\frac{\partial u}{\partial t} + u\frac{\partial u}{\partial x} - \nu\frac{\partial^2 u}{\partial x^2} = 0"
+
+# Build a residual directly.
+residual = build_latex_residual(
+    equation, backend,
+    fields=("u",), coordinates=("x", "t"), parameters={"nu": 0.01},
+)
+
+# Or validate and register it for reuse by name.
+register_latex_pde(
+    "custom_burgers", equation,
+    fields=("u",), coordinates=("x", "t"), parameters={"nu": 0.01},
+)
+    residual = build_residual("custom_burgers", backend)</code></pre>
+    <p class="section-sub">The parser reports unsupported notation early. Vector/tensor operators and arbitrary LaTeX macros are outside the current grammar.</p>
+    <h3>Register the two Maxwell tensor laws</h3>
+    <p>The current parser accepts scalar component equations rather than Einstein-index tensor notation. The runnable example expands the covariant laws <code>∂μF<sup>μν</sup> = μ₀J<sup>ν</sup></code> and <code>∂μF̃<sup>μν</sup> = 0</code> into Gauss, Ampère–Maxwell, no-magnetic-charge, and Faraday components, then registers all eight residual equations. Its fields include E, B, charge density <code>ρ</code>, and current density J; <code>c</code> and <code>ε₀</code> are configurable parameters. It then trains a PINN on a periodic 3-D plane wave and animates the predicted <code>E_y</code> slice. The linked file contains the full registration, training, prediction, and animation code.</p>
+    <pre><code>python examples/maxwell_latex_register.py</code></pre>
+    <p>Source: <a href="examples/maxwell_latex_register.py">examples/maxwell_latex_register.py</a>.</p>
   </section>
 
   <!-- Testing -->
@@ -376,7 +407,7 @@ requirements.txt</code></pre>
       <p style="margin:0 0 1.25rem;color:var(--text-muted);">
         Singh, M. (<a href="https://orcid.org/0009-0009-3913-6929">orcid.org/0009-0009-3913-6929</a>) (2026).
         <em>PhysAI: A Multi-Backend Physics-Informed Neural Network Framework for Solving, Cross-Validating, and
-        Visualizing Ordinary and Partial Differential Equations</em> (Version 5.0.0) [Computer software]. Zenodo.
+        Visualizing Ordinary and Partial Differential Equations</em> (Version 5.1.0) [Computer software]. Zenodo.
         <a href="https://doi.org/10.5281/zenodo.17214724">https://doi.org/10.5281/zenodo.17214724</a>
       </p>
       <div class="label">BibTeX</div>
@@ -388,7 +419,7 @@ requirements.txt</code></pre>
   month     = sep,
   year      = 2026,
   publisher = {Zenodo},
-  version   = {5.0.0},
+  version   = {5.1.0},
   doi       = {10.5281/zenodo.17214724},
   url       = {https://doi.org/10.5281/zenodo.17214724},
   orcid     = {0009-0009-3913-6929}

@@ -13,7 +13,8 @@ Structure (per the planned tiers)
                           initial-condition sampler) builders.
 2. ``build_and_train`` -- ProblemSpec -> AutoOptimizer -> build_pinn ->
                           Trainer -> a short training run, end to end.
-3. Tier A -- every registered PDE (53 entries) trains for a
+3. Tier A -- every registered PDE name (64 entries, covering 57 distinct
+                          residual classes) trains for a
                           few steps without crashing, with finite,
                           non-increasing loss. This is a *mechanical*
                           pipeline test -- geometry sampling, BC/IC
@@ -55,8 +56,6 @@ Tier 3 for the same derivations). Everything else -- that training
 actually converges reasonably, that no backend-specific shape bug slipped
 through, that Dedalus's equation strings actually parse -- needs a real
 run in an environment with torch (and, for Tier C, dedalus) installed.
-Treat a first run of this file as still partly a shakedown of the file
-itself, not only of the library.
 """
 
 import math
@@ -263,7 +262,7 @@ all_backends = pytest.mark.parametrize("backend_name", BACKEND_NAMES)
 # [-1, 1]^spatial_dims, [0, 1] in time if has_time. Tier A intentionally
 # does not try to pick a "smart" domain per PDE -- the point is to prove
 # the pipeline itself works everywhere, not to pick physically
-# interesting domains for all 53 equations.
+# interesting domains for every equation.
 # ---------------------------------------------------------------------------
 
 PDE_CONFIG = {
@@ -320,6 +319,17 @@ PDE_CONFIG = {
     "boussinesq_convection":          (2, True,  4, {}),
     "dendritic_solidification":       (2, True,  2, {}),
     "relativistic_fluid":             (1, True,  2, {}),
+    "einstein_field":                 (3, True, 10, {}),
+    "efe":                            (3, True, 10, {}),
+    "phonon":                         (1, True,  1, {}),
+    "phonons":                        (1, True,  1, {}),
+    "dirac":                          (1, True,  4, {}),
+    "dirac_equation":                 (1, True,  4, {}),
+    "bose_einstein":                  (1, True,  2, {}),
+    "gross_pitaevskii":               (1, True,  2, {}),
+    "fermi_gas":                      (1, True,  2, {}),
+    "fermi_dirac":                    (1, True,  2, {}),
+    "quantum_relativistic_fluid":     (1, True,  2, {}),
 }
 
 
@@ -1099,8 +1109,9 @@ def test_tier_c_heat_matches_dedalus(backend_name):
         override_source={"alpha": alpha},
     )
 
-    x_grid = dedalus_result["x0"] if isinstance(dedalus_result, dict) else dedalus_result.x_grid[0]
-    u_dedalus = dedalus_result["u"] if isinstance(dedalus_result, dict) else dedalus_result.u
+    # Solver.solve_box returns (grid, {variable: values}).
+    x_grid, dedalus_profiles = dedalus_result
+    u_dedalus = dedalus_profiles["u"]
 
     t_final = 0.3
     test_pts = np.stack([x_grid.ravel(), np.full(x_grid.shape[0], t_final)], axis=1).astype(np.float32)
@@ -1164,8 +1175,9 @@ def test_tier_c_wave_matches_dedalus(backend_name):
         override_source={"c": c},
     )
 
-    x_grid = dedalus_result["x0"] if isinstance(dedalus_result, dict) else dedalus_result.x_grid[0]
-    u_dedalus = dedalus_result["u"] if isinstance(dedalus_result, dict) else dedalus_result.u
+    # Solver.solve_box returns (grid, {variable: values}).
+    x_grid, dedalus_profiles = dedalus_result
+    u_dedalus = dedalus_profiles["u"]
 
     t_final = 0.3
     test_pts = np.stack([x_grid.ravel(), np.full(x_grid.shape[0], t_final)], axis=1).astype(np.float32)

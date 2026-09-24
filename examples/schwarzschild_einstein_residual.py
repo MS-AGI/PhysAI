@@ -44,10 +44,14 @@ def main():
     model = build_pinn(
         backend, n_input=4, n_output=10, hidden_sizes=(32, 32),
         output_scaler=OutputScaler(
-            backend, [0.05] * 10, [-0.8, 0, 0, 0, 1.2, 0, 0, 1.2, 0, 1.2],
+            backend,
+            [0.04, 0.01, 0.01, 0.01, 0.06, 0.01, 0.01, 0.06, 0.01, 0.06],
+            [-0.787, 0, 0, 0, 1.265, 0, 0, 1.265, 0, 1.265],
         ),
     )
-    residual = build_residual("einstein_field", backend, diff_mode="reverse")
+    # This residual computes a large tensor Jacobian; forward-mode sweeps are
+    # substantially cheaper here than reverse-mode sweeps over each component.
+    residual = build_residual("einstein_field", backend, diff_mode="forward")
     rng = np.random.default_rng(9)
 
     def sample_spacetime(n):
@@ -56,13 +60,23 @@ def main():
         return np.concatenate([t, xyz], axis=1).astype(np.float32)
 
     coll = sample_spacetime(8)
-    data_points = sample_spacetime(24)
+    data_points = sample_spacetime(64)
     trainer = Trainer(
         backend, config, model, residual, collocation_points=backend.tensor(coll),
         data_points=backend.tensor(data_points),
         data_values=backend.tensor(schwarzschild_metric(data_points)),
     )
-    return trainer, trainer.train()
+    history = trainer.train()
+
+    heldout = sample_spacetime(128)
+    predicted = np.asarray(backend.to_numpy(model.model_fn(backend.tensor(heldout))))
+    expected = schwarzschild_metric(heldout)
+    relative_l2 = float(
+        np.linalg.norm(predicted - expected)
+        / (np.linalg.norm(expected) + 1e-12)
+    )
+    print(f"Held-out metric relative L2 error: {relative_l2:.3e}")
+    return trainer, history, relative_l2
 
 
 if __name__ == "__main__":

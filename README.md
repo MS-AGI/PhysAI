@@ -5,7 +5,7 @@
 [![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
 [![License: AGPL-3.0](https://img.shields.io/badge/AGPL_License_3.0-indigo.svg)](https://opensource.org/licenses/agpl-3-0)
 ![PyPI - Total Downloads](https://img.shields.io/pypi/dw/physai?color=blue&label=Weekly%20Downloads)
-[![Socket Badge](https://badge.socket.dev/pypi/package/physai/4.0.0?artifact_id=tar-gz)](https://badge.socket.dev/pypi/package/physai/4.0.0?artifact_id=tar-gz)
+[![Socket Badge](https://badge.socket.dev/pypi/package/physai/5.1.0?artifact_id=tar-gz)](https://badge.socket.dev/pypi/package/physai/5.1.0?artifact_id=tar-gz)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17214724.svg)](https://doi.org/10.5281/zenodo.17214724)
 [![▶ Open Demo Site](https://img.shields.io/badge/Site_&_Demo-View%20the%20site-FFDB3A)](https://ms-agi.github.io/PhysAI/)
 
@@ -177,7 +177,10 @@ The planned Maxwell item refers to a built-in full-system residual; the examples
 Beyond checking a trained network against a closed-form solution (available for only a curated subset of equations), `Trainer.cross_validate(...)` compares it with an **independent classical numerical solve** through `physai.solvers.solver.Solver`. The model is evaluated on the classical solver's coordinates, and the method reports absolute and relative L2 errors. It supports three paths:
 
 * **Box domains** (`geometry=None`, the default) — a Dedalus spectral solve (`Solver.solve_box`) using tensor-product Chebyshev/Fourier bases. It requires `domain_type`, `bounds`, `variables`, `equations`, `bcs`, and `ics`; the axis settings accept one value for all axes or a per-axis list. Install the Conda solver stack, activate `physai-solvers`, and install PhysAI in that environment before running this path.
-* **Arbitrary geometry** (`geometry=<a physai.geometry.Geometry>`) — an embedded-boundary finite-difference solve (`Solver.solve_geometry`) on a masked regular N-D grid, assembled with `scipy.sparse` or `cupyx.scipy.sparse` when `array_module="cupy"`. This path does not require Dedalus and currently supports `"poisson"`, `"helmholtz"`, and `"heat"`.
+* **Arbitrary geometry and PDE residuals** (`geometry=<a physai.geometry.Geometry>`) — `Solver.solve_geometry` keeps sparse embedded-boundary finite-difference fast paths for Poisson, Helmholtz, and heat, and routes other registered PDEs or caller-supplied residuals through `autosolve`. AutoSolve works from the `residual(model_fn, points)` contract on boxes, CSG, smooth SDFs, and mesh geometries; unregistered equations can supply a residual callable with their constraints.
+* **General classical discretizations**: `Solver.solve(method="discrete_geometry", geometry=..., ...)` solves a sparse linear system or nonlinear residual/Jacobian system on any `Geometry`, including CSG and smooth SDF shapes. Supply `assembler(context) -> (A, b)` or `residual_fn(u, context)` plus `jacobian_fn(u, context)`. The context includes the masked grid, compact unknown indices, projected boundary crossings, normals, and optional space-time coordinates. This handles any PDE for which you provide a classical discretization; a PDE name alone does not determine a numerical scheme.
+* **Unregistered PDE residuals**: `autosolve(residual, geometry, ...)` accepts any callable with the existing `residual(model_fn, points) -> residual tensor` contract, including residual classes not in `PDE_REGISTRY`. It uses a smooth Gaussian RBF field and SciPy nonlinear least squares, with geometry-aware interior/boundary samples, Dirichlet/Neumann/Robin/periodic constraints, optional initial/data constraints, and an `AutoSolverOptimizer` that budgets collocation points from geometry, output count, and available PDE metadata. The optimizer scales anisotropic space-time coordinates, balances PDE and constraint residual blocks, and selects extra RBF regularization when the kernel is ill-conditioned. For a new coupled system, pass `n_output`; the residual must support the selected backend's differentiation operations. RBF collocation is a general method, while convergence still depends on the PDE, constraints, smoothness, and resolution. Example: `solution = autosolve(my_residual, geometry, backend="torch", n_output=2, boundary_conditions=bcs)`.
+* **LaTeX equations**: `build_latex_residual(equation, backend, fields=("u",), coordinates=("x", "t"), parameters={...})` validates supported syntax immediately and returns a backend-differentiable residual. Use `register_latex_pde(name, equation, ...)` to put it in `PDE_REGISTRY`, then construct it with `build_residual(name, backend, ...)`. The parser supports arithmetic, common scalar functions, partial derivative fractions/subscripts, and scalar Laplacians; declare field/coordinate order explicitly.
 * **Native solver adapters** — pass `solver_method="fipy"`, `"fenics"`, `"fenicsx"`, or `"meep"` and its native arguments through `solver_kwargs`. For a custom adapter, register it with `register_solver`; `register_equation_solver` can associate a PDE name with a solver. FiPy and scalar finite-element results are normalized automatically. For Meep or a custom result format, pass `classical_result_adapter` that returns coordinates and named values. These packages are installed in the same Conda environment by `physai.install_solver_dependencies()`.
 
 ```python
@@ -267,7 +270,7 @@ If you use **PhysAI** in your research, academic publication, or official work, 
 Please cite the software as follows:
 
 **APA:**
-> Singh, M. ([https://orcid.org/0009-0009-3913-6929](https://orcid.org/0009-0009-3913-6929)) (2026). *PhysAI: A Multi-Backend Physics-Informed Neural Network Framework for Solving, Cross-Validating, and Visualizing Ordinary and Partial Differential Equations* (Version 5.0.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.17214724
+> Singh, M. ([https://orcid.org/0009-0009-3913-6929](https://orcid.org/0009-0009-3913-6929)) (2026). *PhysAI: A Multi-Backend Physics-Informed Neural Network Framework for Solving, Cross-Validating, and Visualizing Ordinary and Partial Differential Equations* (Version 5.1.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.17214724
 
 **BibTeX:**
 ```bibtex
@@ -277,7 +280,7 @@ Please cite the software as follows:
   month        = sep,
   year         = 2026,
   publisher    = {Zenodo},
-  version      = {5.0.0},
+  version      = {5.1.0},
   doi          = {10.5281/zenodo.17214724},
   url          = {https://doi.org/10.5281/zenodo.17214724},
   orcid        = {0009-0009-3913-6929}

@@ -478,6 +478,39 @@ class Trainer:
             smaller win than XLA does, so it's opt-in via this dict
             rather than silently assumed).
         """
+        for points, values, label in (
+            (bc_points, bc_values, "boundary"),
+            (ic_points, ic_values, "initial-condition"),
+            (data_points, data_values, "data"),
+            (val_points, val_values, "validation"),
+        ):
+            if (points is None) != (values is None):
+                raise ValueError(
+                    f"Trainer: {label} points and values must be supplied together."
+                )
+            if points is not None:
+                if getattr(points, "ndim", None) != 2:
+                    raise ValueError(
+                        f"Trainer: {label} points must be rank 2 [N, d]."
+                    )
+                if points.shape[0] == 0:
+                    raise ValueError(f"Trainer: {label} points must not be empty.")
+                if getattr(values, "ndim", None) not in (1, 2):
+                    raise ValueError(
+                        f"Trainer: {label} values must be rank 1 or 2 [N, n_out]."
+                    )
+                if points.shape[0] != values.shape[0]:
+                    raise ValueError(
+                        f"Trainer: {label} points and values must have the same row count; "
+                        f"got {points.shape[0]} and {values.shape[0]}."
+                    )
+
+        if not isinstance(log_every, int) or isinstance(log_every, bool) or log_every <= 0:
+            raise ValueError("Trainer: log_every must be a positive integer.")
+        if boundary_conditions is not None and n_bc_samples is not None:
+            if not isinstance(n_bc_samples, int) or isinstance(n_bc_samples, bool) or n_bc_samples <= 0:
+                raise ValueError("Trainer: n_bc_samples must be a positive integer.")
+
         self.backend    = backend
         self.config     = config
         self.model      = model
@@ -564,6 +597,8 @@ class Trainer:
                 )
         elif residual is None or collocation_points is None:
             raise ValueError("Pointwise Trainer mode requires both residual and collocation_points.")
+        elif getattr(collocation_points, "ndim", None) != 2 or collocation_points.shape[0] == 0:
+            raise ValueError("Trainer: collocation_points must be a non-empty rank-2 [N, d] tensor.")
 
         self.log_every      = log_every
 

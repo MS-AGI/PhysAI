@@ -6,6 +6,7 @@ from .solvers import *
 from .core.losses import *
 from .core.auto_optimizer import *
 from .core.pde_residual import *
+from .core.latex_pde import *
 from .trainer import *
 from .visualization import *
 from .visualization_nd import *

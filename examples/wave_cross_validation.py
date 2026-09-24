@@ -1,19 +1,25 @@
-"""Train a wave PINN and cross-validate it against Dedalus.
+"""Train a first-order wave PINN and compare it with a classical solver.
 
 Run from the repository root with:
 
     python examples/wave_cross_validation.py
+    python examples/wave_cross_validation.py --reference solve-box
 
-This example requires the optional Dedalus dependency.
+AutoSolve is the default reference. ``solve-box`` selects the alternative
+Dedalus box solver and requires the optional Dedalus dependency.
 """
 from __future__ import annotations
+
+import argparse
 
 import numpy as np
 
 from physai.backends import get_backend
 from physai.core.auto_optimizer import AutoOptimizer, DomainSpec, ProblemSpec
-from physai.core.pde_residual import PDEResidual
+from physai.core.pde_residual import PDEResidual, build_residual, register_pde
+from physai.geometry import BoundaryConditionSet, box, face_region
 from physai.models.pinn import build_pinn
+from physai.solvers import autosolve
 from physai.trainer import Trainer
 
 
@@ -34,18 +40,24 @@ class FirstOrderWave(PDEResidual):
         return b.stack([u_t - model_fn(points)[..., 1], v_t - self.c**2 * u_xx], axis=-1)
 
 
-def main():
-    """Train the two-state wave PINN and compare both fields with Dedalus."""
+def main(reference="autosolve"):
+    """Train the two-state wave PINN and compare it with one reference solve."""
+    if reference not in {"autosolve", "solve-box"}:
+        raise ValueError("reference must be 'autosolve' or 'solve-box'")
     backend = get_backend("torch", device="cpu")
     c = 1.0
+    register_pde("first_order_wave", FirstOrderWave, meta={
+        "order": 2, "nonlinear": False, "n_components": 2,
+        "stiff": False, "spectral_bias": "mixed", "recommended_arch": "pinn",
+    })
     domain = DomainSpec(spatial_dims=1, bounds=[(-1.0, 1.0)], time_domain=(0.0, 0.25))
     spec = ProblemSpec(
-        pde_name="wave", model_arch="pinn", domain=domain, backend_name="torch",
+        pde_name="first_order_wave", model_arch="pinn", domain=domain, backend_name="torch",
         n_collocation=512, n_bc_points=128, max_epochs=2500, use_lbfgs_phase=False,
     )
     config = AutoOptimizer(backend).analyse(spec)
     model = build_pinn(backend, n_input=2, n_output=2, hidden_sizes=(64, 64, 64), use_fourier=True)
-    residual = FirstOrderWave(backend, c=c)
+    residual = build_residual("first_order_wave", backend, c=c)
     rng = np.random.default_rng(8)
     coll = np.column_stack([rng.uniform(-1, 1, 512), rng.uniform(0, 0.25, 512)]).astype(np.float32)
 
@@ -62,17 +74,72 @@ def main():
         ic_points=backend.tensor(ic_points), ic_values=backend.tensor(ic_values),
     )
     trainer.train()
-    errors = trainer.cross_validate(
-        domain_type="Chebyshev", bounds=(-1.0, 1.0), grid_points=128,
-        variables=["u", "v"],
-        equations=["dt(u) - v = 0", "dt(v) - dx_x0(dx_x0(u)) = 0"],
-        bcs=["u(x0='left') = 0", "u(x0='right') = 0"],
-        ics={"u": lambda x: np.sin(np.pi * x), "v": lambda x: np.zeros_like(x)},
-        dt=0.002, stop_time=0.25,
-    )
-    print(errors)
-    return trainer, errors
+    if reference == "autosolve":
+        geometry = box([(-1.0, 1.0)])
+        auto_bcs = BoundaryConditionSet(geometry)
+        auto_bcs.add(
+            "dirichlet", value=lambda x: np.zeros((len(x), 2)),
+            region=face_region(axis=0, side="min"), name="left_end",
+        )
+        auto_bcs.add(
+            "dirichlet", value=lambda x: np.zeros((len(x), 2)),
+            region=face_region(axis=0, side="max"), name="right_end",
+        )
+        auto_solution = autosolve(
+            residual, geometry,
+            backend=backend,
+            pde="first_order_wave",
+            n_output=2,
+            time_domain=(0.0, 0.25),
+            boundary_conditions=auto_bcs,
+            ic_points=x0[:16],
+            ic_values=ic_values[:16],
+            n_collocation=24,
+            n_boundary=8,
+            max_nfev=20,
+            tolerance=1e-5,
+            n_evaluation=128,
+            eval_time=0.25,
+            require_convergence=False,
+            seed=17,
+        )
+        comparison_points = backend.tensor(auto_solution["coordinates"])
+        reference_values = auto_solution["values"]
+        names = ("u0", "u1")
+        print(
+            "AutoSolve diagnostics:",
+            f"success={auto_solution['optimizer_result'].success}",
+            f"residual_inf={auto_solution['residual_norm']:.3e}",
+        )
+    else:
+        solve_box_errors = trainer.cross_validate(
+            domain_type="Chebyshev", bounds=(-1.0, 1.0), grid_points=128,
+            variables=["u", "v"],
+            equations=["dt(u) - v = 0", f"dt(v) - {c**2}*dx_x0(dx_x0(u)) = 0"],
+            bcs=["u(x0='left') = 0", "u(x0='right') = 0"],
+            ics={"u": lambda x: np.sin(np.pi * x), "v": lambda x: np.zeros_like(x)},
+            dt=0.002, stop_time=0.25,
+        )
+        print("Custom solve-box comparison:", solve_box_errors)
+        return trainer, {"solve_box": solve_box_errors}
+
+    prediction = np.asarray(backend.to_numpy(model.model_fn(comparison_points)))
+    errors = {}
+    for column, name in enumerate(names):
+        reference_values_for_field = np.asarray(reference_values[name]).reshape(-1)
+        difference = prediction[:, column].reshape(-1) - reference_values_for_field
+        errors[f"{name}_l2_abs"] = float(np.linalg.norm(difference))
+        errors[f"{name}_l2_rel"] = float(
+            np.linalg.norm(difference) / (np.linalg.norm(reference_values_for_field) + 1e-12)
+        )
+    print("AutoSolve comparison:", errors)
+    return trainer, {"autosolve": errors}
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--reference", choices=("autosolve", "solve-box"), default="autosolve",
+        help="reference solver to compare against (default: autosolve)",
+    )
+    main(reference=parser.parse_args().reference)
