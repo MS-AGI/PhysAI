@@ -9,6 +9,6 @@ authors:
 repository-code: "https://github.com/MS-AGI/PhysAI"
 license: AGPL-3.0-only
 doi: "10.5281/zenodo.17214724"
-version: "5.4.0"
+version: "5.5.0"
 date-released: "2026-09-25"
 message: "If you use this software, please cite it as below."
