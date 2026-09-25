@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "physai"
-version = "5.1.0"
+version = "5.3.0"
 description = "Multi-backend Physics-Informed Neural Network (PINN) framework for solving, animating, and cross-validating ODEs/PDEs, with 50+ built-in equations, SDF-based geometry/CSG, and automatic architecture selection"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -84,7 +84,10 @@ chat       = ["rich>=13.0", "llama-cpp-python", "huggingface_hub>=0.20"]
 # doesn't change any existing behavior -- it just gives users of that
 # fallback path an explicit, discoverable way to opt into the better one.
 mesh       = ["trimesh>=4.0"]
-all        = ["physai[jax,tensorflow,paddle,dashboard,chat,mesh]"]
+# Local execution runtime for PhysAI Workbench (physai-web): a token-authenticated
+# Jupyter server the browser talks to directly. See physai/workbench_local.py.
+workbench-local = ["jupyter_server>=2.0", "ipykernel>=6.0"]
+all        = ["physai[jax,tensorflow,paddle,dashboard,chat,mesh,workbench-local]"]
 # Not documented in the README either, but the repo already has a full
 # pytest suite (667 tests per tests/tests_log.txt) plus a .coverage file,
 # with no matching extras group for contributors to set up from a clean
@@ -94,6 +97,9 @@ dev = [
     "pytest>=7.0",
     "pytest-cov",
 ]
+
+[project.scripts]
+physai-workbench = "physai.workbench_local:main"
 
 [project.urls]
 homepage      = "https://github.com/MS-AGI/PhysAI"

@@ -5,10 +5,10 @@
 [![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
 [![License: AGPL-3.0](https://img.shields.io/badge/AGPL_License_3.0-indigo.svg)](https://opensource.org/licenses/agpl-3-0)
 ![PyPI - Total Downloads](https://img.shields.io/pypi/dw/physai?color=blue&label=Weekly%20Downloads)
-[![Socket Badge](https://badge.socket.dev/pypi/package/physai/5.1.0?artifact_id=tar-gz)](https://badge.socket.dev/pypi/package/physai/5.1.0?artifact_id=tar-gz)
+[![Socket Badge](https://badge.socket.dev/pypi/package/physai?artifact_id=tar-gz)](https://badge.socket.dev/pypi/package/physai?artifact_id=tar-gz)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17214724.svg)](https://doi.org/10.5281/zenodo.17214724)
-[![▶ Open Demo Site](https://img.shields.io/badge/Site_&_Demo-View%20the%20site-FFDB3A)](https://ms-agi.github.io/PhysAI/)
-
+[![▶ Open Site](https://img.shields.io/badge/Site_-View%20the%20site-FFDB3A)](https://ms-agi.github.io/PhysAI/)
+[![▶ Open WorkBench](https://img.shields.io/badge/WorkBench_&_Demo-View%20the%20WorkBench-FFDB3A)](https://physai-workbench.vercel.app)
 
 > [Jump to Citation](#citation) | If you use PhysAI, neural operators, or its cross-validation tools in academic work, please cite [DOI 10.5281/zenodo.17214724](https://doi.org/10.5281/zenodo.17214724).
 
@@ -21,6 +21,7 @@ PhysAI is an open-source, multi-backend framework for solving partial differenti
     <td><a href="https://github.com/MS-AGI/PhysAI#installation"><img src="https://img.shields.io/badge/Installation-Guide-4F46E5?style=for-the-badge" alt="Installation Guide"></a></td>
     <td><a href="https://github.com/MS-AGI/PhysAI#quick-start"><img src="https://img.shields.io/badge/Quick_Start-Examples-0F766E?style=for-the-badge" alt="Quick Start examples"></a></td>
     <td><a href="https://ms-agi.github.io/PhysAI/"><img src="https://img.shields.io/badge/Live-Site-F59E0B?style=for-the-badge" alt="Live site"></a></td>
+    <td><a href="https://ms-agi.github.io/PhysAI/"><img src="https://img.shields.io/badge/Live-Workbench-F9E0B?style=for-the-badge" alt="Live Workbench"></a></td>
   </tr>
 </table>
 
@@ -31,7 +32,7 @@ PhysAI is an open-source, multi-backend framework for solving partial differenti
 
 **PhysAI** is a research library for approximating solutions to partial and ordinary differential equations with neural networks, built around the physics rather than around any single deep learning framework. It implements **Physics-Informed Neural Networks (PINNs)**, **Fourier Neural Operators (FNOs)**, and a **Unified Spectral Element Neural Operator (USENO)** on a common backend abstraction spanning **PyTorch, JAX, TensorFlow, and PaddlePaddle**, so the same governing equation, domain, and boundary/initial conditions train identically regardless of which deep learning framework a given lab, cluster, or paper already standardizes on.
 
-The library is organized around the physics problem, not the network architecture: a **registry of 57 governing equations** — elliptic and parabolic PDEs, the compressible and incompressible Navier–Stokes and Euler systems, the linear and nonlinear Schrödinger equation, reaction–diffusion and pattern-formation systems, stochastic/kinetic (Fokker–Planck) equations, and relativistic and quantum-field residuals spanning the Dirac equation, the Einstein field equations, and quantum-gas statistics — an **SDF/CSG-based arbitrary-geometry system** for domains beyond a box or ball, a heuristic **AutoOptimizer** that reads the order, nonlinearity, and stiffness of a chosen equation to size the network and pick a training schedule, and **independent numerical cross-validation** through Dedalus, embedded-boundary finite differences, or optional native solver adapters.
+The library is organized around the physics problem, not the network architecture: a [**registry of 57 governing equations**](#governing-equations), alongside an [**inbuilt LaTeX to Residual pipeline**](#register-a-pde-from-latex-and-solve-it-with-autosolve) and **traditional custom PDEs write option** — elliptic and parabolic PDEs, the compressible and incompressible Navier–Stokes and Euler systems, the linear and nonlinear Schrödinger equation, reaction–diffusion and pattern-formation systems, stochastic/kinetic (Fokker–Planck) equations, and relativistic and quantum-field residuals spanning the Dirac equation, the Einstein field equations, and quantum-gas statistics — an **SDF/CSG-based arbitrary-geometry system** for domains beyond a box or ball, a heuristic **AutoOptimizer** that reads the order, nonlinearity, and stiffness of a chosen equation to size the network and pick a training schedule, and [**inbuilt independent numerical cross-validation**](#numerical-cross-validation) through **AutoSolve(automatically handles most PDEs solving)** or **inbuilt Dedalus**, embedded-boundary finite differences, or optional **native solver** adapters(**Meep, Fipy, Cupy, Fenics**)
 
 ### What's actually here
 
@@ -319,7 +320,7 @@ If you use **PhysAI** in your research, academic publication, or official work, 
 Please cite the software as follows:
 
 **APA:**
-> Singh, M. ([https://orcid.org/0009-0009-3913-6929](https://orcid.org/0009-0009-3913-6929)) (2026). *PhysAI: A Multi-Backend Physics-Informed Neural Network Framework for Solving, Cross-Validating, and Visualizing Ordinary and Partial Differential Equations* (Version 5.1.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.17214724
+> Singh, M. ([https://orcid.org/0009-0009-3913-6929](https://orcid.org/0009-0009-3913-6929)) (2026). *PhysAI: A Multi-Backend Physics-Informed Neural Network Framework for Solving, Cross-Validating, and Visualizing Ordinary and Partial Differential Equations* (Version 5.3.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.17214724
 
 **BibTeX:**
 ```bibtex
@@ -329,7 +330,7 @@ Please cite the software as follows:
   month        = sep,
   year         = 2026,
   publisher    = {Zenodo},
-  version      = {5.1.0},
+  version      = {5.3.0},
   doi          = {10.5281/zenodo.17214724},
   url          = {https://doi.org/10.5281/zenodo.17214724},
   orcid        = {0009-0009-3913-6929}
@@ -337,6 +338,41 @@ Please cite the software as follows:
 ```
 
 ---
+
+## PhysAI WorkBench
+[Go To WorkBench](https://physai-workbench.vercel.app)
+
+This is a new feature introduced from physai-5.3.0 onwards.
+An interactive instant code generator(obviously not AI-generated) for [PhysAI](https://ms-agi.github.io/PhysAI). Pick a geometry (or upload a mesh),
+an equation and a method; the app generates an official PhysAI script. Running scripts from Workbench in a connected Python/Jupyter runtime is one option while the other is to run `pip install physai`  and then run the copied-from-platform script yourself.
+
+Workbench runs entirely in the browser and never sends your script or data to
+any server it doesn't already trust: it talks straight to a Jupyter server on
+your own machine over a token-authenticated WebSocket
+(@jupyterlab/services), the same way JupyterLab itself does. This module is
+the "physai-runner" side of that connection -- it starts that local server
+with the right flags so the browser is allowed to reach it, and prints the
+URL (with token) to paste into Workbench's "Local runtime" panel.
+```
+Install:
+    pip install "physai[workbench-local]"
+
+Run example:
+    physai-workbench
+
+    or
+
+    physai-workbench --origin <url> # This is strictly for potential contributors,
+                                    # ALLOWS TO CHANGE THE ORIGIN(WORKBENCHURL) 
+                                    # FOR THAT SPECIFIC RUN
+
+    or
+
+    physai-workbench --port <port> --open-browser  # Select a 
+                                                   # custom port-> --port <port> , 
+                                                   # or add --open-browser 
+                                                   # for opening a tab also
+```
 
 ## License
 
