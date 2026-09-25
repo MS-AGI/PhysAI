@@ -320,7 +320,7 @@ If you use **PhysAI** in your research, academic publication, or official work, 
 Please cite the software as follows:
 
 **APA:**
-> Singh, M. ([https://orcid.org/0009-0009-3913-6929](https://orcid.org/0009-0009-3913-6929)) (2026). *PhysAI: A Multi-Backend Physics-Informed Neural Network Framework for Solving, Cross-Validating, and Visualizing Ordinary and Partial Differential Equations* (Version 5.3.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.17214724
+> Singh, M. ([https://orcid.org/0009-0009-3913-6929](https://orcid.org/0009-0009-3913-6929)) (2026). *PhysAI: A Multi-Backend Physics-Informed Neural Network Framework for Solving, Cross-Validating, and Visualizing Ordinary and Partial Differential Equations* (Version 5.4.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.17214724
 
 **BibTeX:**
 ```bibtex
@@ -330,7 +330,7 @@ Please cite the software as follows:
   month        = sep,
   year         = 2026,
   publisher    = {Zenodo},
-  version      = {5.3.0},
+  version      = {5.4.0},
   doi          = {10.5281/zenodo.17214724},
   url          = {https://doi.org/10.5281/zenodo.17214724},
   orcid        = {0009-0009-3913-6929}
@@ -342,7 +342,7 @@ Please cite the software as follows:
 ## PhysAI WorkBench
 [Go To WorkBench](https://physai-workbench.vercel.app)
 
-This is a new feature introduced from physai-5.3.0 onwards.
+This is a new feature introduced from physai-5.4.0 onwards.
 An interactive instant code generator(obviously not AI-generated) for [PhysAI](https://ms-agi.github.io/PhysAI). Pick a geometry (or upload a mesh),
 an equation and a method; the app generates an official PhysAI script. Running scripts from Workbench in a connected Python/Jupyter runtime is one option while the other is to run `pip install physai`  and then run the copied-from-platform script yourself.
 

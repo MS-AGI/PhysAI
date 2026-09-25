@@ -32,7 +32,7 @@ import socket
 import sys
 
 DEFAULT_ORIGINS = (
-    "https://physai-workbench.vertex.app",
+    "https://physai-workbench.vercel.app",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 )
