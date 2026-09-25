@@ -1047,3 +1047,24 @@ collected 31 items
 tests\test_pde_register.py ...............................                                                                                                                [100%]
 
 ============================================================================= 31 passed in 16.27s ==============================================================================
+
+====================================== test session starts ======================================
+platform win32 -- Python 3.13.3, pytest-8.4.2, pluggy-1.6.0
+rootdir: D:\desktop2\public-impact\python-packages\physai-library
+configfile: pyproject.toml
+plugins: anyio-4.9.0, langsmith-0.3.42, cov-7.1.0, instafail-0.5.0
+collected 60 items                                                                               
+
+tests\test_latextores.py ............................................................      [100%]
+
+======================================= warnings summary ========================================
+C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\setuptools\_scripts.py:14
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\setuptools\_scripts.py:14: DeprecationWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html
+    import pkg_resources
+
+C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\paddle\utils\cpp_extension\extension_utils.py:712
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\paddle\utils\cpp_extension\extension_utils.py:712: UserWarning: No ccache found. Please be aware that recompiling all source files may be required. You can download and install ccache from: https://github.com/ccache/ccache/blob/master/doc/INSTALL.md
+    warnings.warn(warning_message)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================ 60 passed, 2 warnings in 33.11s ================================

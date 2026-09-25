@@ -413,6 +413,7 @@ solution = autosolve(
       <tr><td><strong>JAX</strong></td><td>Parameters live outside the model object (Flax-style), so <code>Trainer.init_jax(dummy_input)</code> must be called once before <code>trainer.train()</code>.</td></tr>
       <tr><td><strong>JAX / Flax pin</strong></td><td>Install via the <code>jax</code> extra rather than an unpinned <code>jax</code>/<code>flax</code>. JAX ≥ 0.11 removes an internal API older Flax releases still call. The <code>pyproject.toml</code> pins keep the pair compatible.</td></tr>
       <tr><td><strong>Precision</strong></td><td><code>AutoOptimizer</code> recommends float64 for equations flagged stiff in <code>_PDE_META</code>, float32 otherwise — overridable via <code>ProblemSpec.extra_params</code>.</td></tr>
+      <tr><td><strong>Paddle</strong></td><td>The latest PaddlePaddle build (confirmed on 3.3.1) has no registered higher-order backward kernel for a few fused ops — <code>elu</code>, <code>divide</code>/<code>reciprocal</code>, <code>pow(x, 2)</code>, and <code>square</code> — so a residual that differentiates through one of them past 1st order raises <code>RuntimeError: &lt;op&gt;_double_grad doesn't have any grad op</code>. Generic ops (<code>add</code>, <code>subtract</code>, <code>multiply</code>, <code>exp</code>, <code>log</code>, <code>sin</code>, <code>cos</code>, <code>tanh</code>) are unaffected and work to at least 3rd order. Rewrite the offending op in terms of these instead (e.g. <code>a/b</code> → <code>a*exp(-log(b))</code>, <code>x**2</code> → <code>x*x</code>) rather than treating it as a bug in this codebase.</td></tr>
     </table>
   </section>
 
@@ -425,7 +426,7 @@ solution = autosolve(
       <p style="margin:0 0 1.25rem;color:var(--text-muted);">
         Singh, M. (<a href="https://orcid.org/0009-0009-3913-6929">orcid.org/0009-0009-3913-6929</a>) (2026).
         <em>PhysAI: A Multi-Backend Physics-Informed Neural Network Framework for Solving, Cross-Validating, and
-        Visualizing Ordinary and Partial Differential Equations</em> (Version 5.4.0) [Computer software]. Zenodo.
+        Visualizing Ordinary and Partial Differential Equations</em> (Version 5.5.0) [Computer software]. Zenodo.
         <a href="https://doi.org/10.5281/zenodo.17214724">https://doi.org/10.5281/zenodo.17214724</a>
       </p>
       <div class="label">BibTeX</div>
@@ -437,7 +438,7 @@ solution = autosolve(
   month     = sep,
   year      = 2026,
   publisher = {Zenodo},
-  version   = {5.4.0},
+  version   = {5.5.0},
   doi       = {10.5281/zenodo.17214724},
   url       = {https://doi.org/10.5281/zenodo.17214724},
   orcid     = {0009-0009-3913-6929}
@@ -447,7 +448,7 @@ solution = autosolve(
   <section id="workbench-setup" class="block">
     <h2 class="section-title" style="font-style: italic;">PhysAI WorkBench</h2>
     <p class="section-sub" style="white-space: pre-line;">
-      This is a new feature introduced from physai-5.4.0 onwards.
+      This is a new feature introduced from physai-5.5.0 onwards.
     
       An interactive instant code generator(obviously not AI-generated) for PhysAI.
       Pick a geometry (or upload a mesh), an equation and a method; the app generates an official PhysAI script. Running scripts from Workbench in a connected Python/Jupyter runtime is one option while the other is to run `pip install physai`  and then run the copied-from-platform script yourself.

@@ -273,6 +273,7 @@ PhysAI abstracts tensors, autodiff, and optimizers behind `physai.backends.base.
 * **JAX**: parameters live outside the model object (Flax-style), so `Trainer.init_jax(dummy_input)` must be called once before `trainer.train()` — see the Quick Start example.
 * **JAX/Flax version pin**: install via `pip install "physai[jax]"` or `requirements.txt` rather than an unpinned `jax`/`flax`. JAX ≥ 0.11 removes an internal API (`jax.core.get_opaque_trace_state`) that older Flax releases still call, which surfaces as an `AttributeError` inside `trainer.init_jax(...)`. The `jax<0.11`/`flax>=0.10,<0.11` pins in `pyproject.toml` keep the pair compatible.
 * **Precision**: `AutoOptimizer` recommends float64 for equations flagged stiff in `_PDE_META`, and float32 otherwise; override via `ProblemSpec.extra_params` if a given problem needs a different precision than the heuristic selects.
+* **Paddle higher-order kernels**: the installed PaddlePaddle build (confirmed on 3.3.1) has no registered higher-order backward kernel for a few fused ops — `elu`, `divide`/`reciprocal`, `pow(x, 2)`, and `square` — so a residual that differentiates through one of them past 1st order raises `RuntimeError: <op>_double_grad doesn't have any grad op` (or `_triple_grad` for 3rd order). Generic ops (`add`, `subtract`, `multiply`, `exp`, `log`, `sin`, `cos`, `tanh`) are unaffected and are exercised to 3rd order in `tests/test_latextores.py`'s KdV test. If a manufactured solution or model needs a 2nd/3rd derivative through one of the affected ops, rewrite it in terms of the ops above (e.g. `a/b` → `a*exp(-log(b))`, `x**2` → `x*x`) — see `_elu`/`_pade_apply` in `paddle_backend.py` for the established pattern.
 
 ---
 
@@ -320,7 +321,7 @@ If you use **PhysAI** in your research, academic publication, or official work, 
 Please cite the software as follows:
 
 **APA:**
-> Singh, M. ([https://orcid.org/0009-0009-3913-6929](https://orcid.org/0009-0009-3913-6929)) (2026). *PhysAI: A Multi-Backend Physics-Informed Neural Network Framework for Solving, Cross-Validating, and Visualizing Ordinary and Partial Differential Equations* (Version 5.4.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.17214724
+> Singh, M. ([https://orcid.org/0009-0009-3913-6929](https://orcid.org/0009-0009-3913-6929)) (2026). *PhysAI: A Multi-Backend Physics-Informed Neural Network Framework for Solving, Cross-Validating, and Visualizing Ordinary and Partial Differential Equations* (Version 5.5.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.17214724
 
 **BibTeX:**
 ```bibtex
@@ -330,7 +331,7 @@ Please cite the software as follows:
   month        = sep,
   year         = 2026,
   publisher    = {Zenodo},
-  version      = {5.4.0},
+  version      = {5.5.0},
   doi          = {10.5281/zenodo.17214724},
   url          = {https://doi.org/10.5281/zenodo.17214724},
   orcid        = {0009-0009-3913-6929}
@@ -342,7 +343,7 @@ Please cite the software as follows:
 ## PhysAI WorkBench
 [Go To WorkBench](https://physai-workbench.vercel.app)
 
-This is a new feature introduced from physai-5.4.0 onwards.
+This is a new feature introduced from physai-5.5.0 onwards.
 An interactive instant code generator(obviously not AI-generated) for [PhysAI](https://ms-agi.github.io/PhysAI). Pick a geometry (or upload a mesh),
 an equation and a method; the app generates an official PhysAI script. Running scripts from Workbench in a connected Python/Jupyter runtime is one option while the other is to run `pip install physai`  and then run the copied-from-platform script yourself.
 

@@ -872,3 +872,35 @@ tests/test_trainer.py::TestTrainerCompile::test_compile_true_trains_and_composit
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 =============================== 667 passed, 2 skipped, 97 warnings in 145.49s (0:02:25) ===============================
+
+====================================== test session starts ======================================
+platform win32 -- Python 3.13.3, pytest-8.4.2, pluggy-1.6.0
+rootdir: D:\desktop2\public-impact\python-packages\physai-library
+configfile: pyproject.toml
+plugins: anyio-4.9.0, langsmith-0.3.42, cov-7.1.0, instafail-0.5.0
+collected 60 items                                                                               
+
+tests\test_latextores.py ............................................................      [100%]
+
+======================================= warnings summary ========================================
+C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\setuptools\_scripts.py:14
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\setuptools\_scripts.py:14: DeprecationWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html
+    import pkg_resources
+
+C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\paddle\utils\cpp_extension\extension_utils.py:712
+  C:\Users\DELL\AppData\Local\Programs\Python\Python313\Lib\site-packages\paddle\utils\cpp_extension\extension_utils.py:712: UserWarning: No ccache found. Please be aware that recompiling all source files may be required. You can download and install ccache from: https://github.com/ccache/ccache/blob/master/doc/INSTALL.md
+    warnings.warn(warning_message)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================ 60 passed, 2 warnings in 33.11s ================================
+
+====================================== test session starts ======================================
+platform win32 -- Python 3.13.3, pytest-8.4.2, pluggy-1.6.0
+rootdir: D:\desktop2\public-impact\python-packages\physai-library
+configfile: pyproject.toml
+plugins: anyio-4.9.0, langsmith-0.3.42, cov-7.1.0, instafail-0.5.0
+collected 32 items                                                                               
+
+tests\test_pde_register.py ................................                                [100%]
+
+====================================== 32 passed in 15.05s ======================================

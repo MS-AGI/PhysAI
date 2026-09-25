@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "physai"
-version = "5.4.0"
+version = "5.5.0"
 description = "Multi-backend Physics-Informed Neural Network (PINN) framework for solving, animating, and cross-validating ODEs/PDEs, with 50+ built-in equations, SDF-based geometry/CSG, and automatic architecture selection"
 readme = "README.md"
 requires-python = ">=3.9"

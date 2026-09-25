@@ -98,7 +98,7 @@ def _replace_derivative_fractions(text: str, fields: Sequence[str], coordinates:
             numerator_text,
         )
         variables = re.findall(
-            r"\\partial(?:\s*_\s*)?\{?([A-Za-z][A-Za-z0-9_]*)\}?"
+            r"\\partial(?:\s*_\s*)?\{?\s*([A-Za-z][A-Za-z0-9_]*)\}?"
             r"(?:\s*\^\s*\{?(\d+)\}?)?",
             denominator_text,
         )
@@ -153,6 +153,12 @@ def _latex_to_python(expression: str, fields: Sequence[str], coordinates: Sequen
         text = text.replace(spacing, " ")
     text = _replace_derivative_fractions(text, fields, coordinates)
     text = _replace_shorthand_derivatives(text, fields, coordinates)
+    # A macro directly against a derivative it multiplies (e.g. \nu\frac{...})
+    # must not fuse with the D(/Lap( that replaced the fraction, or later
+    # macro-name substitution (below) merges it into one bad identifier
+    # (\nu + D(...) -> nuD(...)). Mark the split while the backslash is
+    # still there to disambiguate it from a field name.
+    text = re.sub(r"(\\[A-Za-z]+)(?=(?:D|Lap)\()", r"\1*", text)
     coordinate_args = r"\s*,\s*".join(re.escape(axis) for axis in coordinates)
     for field in sorted(fields, key=len, reverse=True):
         text = re.sub(
@@ -171,6 +177,11 @@ def _latex_to_python(expression: str, fields: Sequence[str], coordinates: Sequen
         group, end = _read_group(text, idx)
         text = text[:idx - len("sqrt")] + f"sqrt({group})" + text[end:]
     text = text.replace("^", "**").replace("{", "(").replace("}", ")")
+    # A braced exponent (e.g. c^{2}) or other parenthesised group butted
+    # directly against what follows it (e.g. c**(2)D(u, x, x), from
+    # c^{2}\frac{...}) is also implicit multiplication, even with no
+    # whitespace between the ")" and the next token.
+    text = re.sub(r"(?<=\))(?=[A-Za-z_(])", "*", text)
     # Juxtaposition such as u u_x denotes multiplication in PDE notation.
     text = re.sub(r"(?<=[A-Za-z0-9_)])\s+(?=[A-Za-z_(])", "*", text)
     text = re.sub(r"(?<=\d)(?=[A-Za-z_(])", "*", text)
@@ -327,7 +338,9 @@ class LatexPDEResidual(PDEResidual):
 
         for axis in (self.coordinates.index(name) for name in axes):
             previous = current
-            gradient = backend.grad(lambda query: backend.sum(previous(query)), mode=self.diff_mode)
+            gradient = backend.grad(
+                lambda query, prev=previous: backend.sum(prev(query)), mode=self.diff_mode
+            )
             current = lambda query, grad=gradient, index=axis: grad(query)[..., index]
         return current(points)
 
